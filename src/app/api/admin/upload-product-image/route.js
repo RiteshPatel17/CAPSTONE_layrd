@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function POST(req) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+
     const formData = await req.formData();
     const file = formData.get("file");
 
@@ -14,10 +16,10 @@ export async function POST(req) {
     const ext = file.name.split('.').pop();
     const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${ext}`;
 
-    // Upload to product_images bucket
+    // Upload to product-images bucket
     const { data: uploadData, error: uploadError } = await supabaseAdmin
       .storage
-      .from('product_images')
+      .from('product-images')
       .upload(filename, file, {
         contentType: file.type,
         upsert: false
@@ -31,7 +33,7 @@ export async function POST(req) {
     // Get public URL
     const { data: { publicUrl } } = supabaseAdmin
       .storage
-      .from('product_images')
+      .from('product-images')
       .getPublicUrl(uploadData.path);
 
     return NextResponse.json({ success: true, url: publicUrl });

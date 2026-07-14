@@ -15,7 +15,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // ── Public / browser client (uses anon key, respects Row Level Security) ──
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Falls back to placeholders so a missing env var fails at the point of
+// use (a clear Supabase error) instead of crashing on import.
+export const supabase = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-anon-key"
+);
 
 // ── Server-side admin client (uses service role key — server/API routes only!) ──
 // NEVER import this in client components.
