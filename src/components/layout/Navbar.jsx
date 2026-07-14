@@ -1,0 +1,356 @@
+"use client";
+// ─────────────────────────────────────────────
+// LÄYRD – Navbar
+// Sticky top navigation with cart icon and Day/Night toggle
+// ─────────────────────────────────────────────
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { ShoppingBag, Menu, X, User, LogOut } from "lucide-react";
+import { useCart } from "../cart/CartContext.jsx";
+import { NAV_LINKS, BRAND } from "../../lib/constants.js";
+import ThemeToggle from "./ThemeToggle.jsx";
+import { getCurrentUser, signOut } from "../../lib/auth.js";
+import { supabase } from "../../lib/supabase.js";
+import { useRouter } from "next/navigation";
+
+export default function Navbar() {
+  const { totalItems, openCart } = useCart();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    // 1. Fetch current user initially and listen for changes
+    async function checkUser() {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+    }
+    checkUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        checkUser();
+      }
+    });
+
+    // 2. Setup inactivity timer (e.g. 15 minutes = 900,000 ms)
+    const INACTIVITY_LIMIT = 15 * 60 * 1000; 
+    let timeoutId;
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(async () => {
+        // If logged in, log them out
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          await signOut();
+          setUser(null);
+          router.push("/login?reason=timeout");
+        }
+      }, INACTIVITY_LIMIT);
+    };
+
+    // Attach event listeners to reset timer on activity
+    window.addEventListener("mousemove", resetTimer);
+    window.addEventListener("keydown", resetTimer);
+    window.addEventListener("scroll", resetTimer);
+    window.addEventListener("click", resetTimer);
+
+    // Initial start
+    resetTimer();
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+      clearTimeout(timeoutId);
+      window.removeEventListener("mousemove", resetTimer);
+      window.removeEventListener("keydown", resetTimer);
+      window.removeEventListener("scroll", resetTimer);
+      window.removeEventListener("click", resetTimer);
+    };
+  }, [router]);
+
+  async function handleSignOut() {
+    await signOut();
+    setUser(null);
+    router.push("/");
+  }
+
+  return (
+    <nav className="navbar">
+      <div className="container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        {/* Logo */}
+        <Link href="/" style={{ textDecoration: "none" }}>
+          <span
+            style={{
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontSize: "1.7rem",
+              fontWeight: 700,
+              letterSpacing: "0.25em",
+              color: "var(--text-primary)",
+              textTransform: "uppercase",
+              userSelect: "none",
+            }}
+          >
+            {BRAND.name}
+          </span>
+        </Link>
+
+        {/* Desktop nav links */}
+        <div
+          style={{
+            display: "flex",
+            gap: "32px",
+            alignItems: "center",
+          }}
+          className="desktop-nav"
+        >
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              style={{
+                fontSize: "0.78rem",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "var(--text-secondary)",
+                fontWeight: 500,
+                transition: "color 0.2s",
+              }}
+              onMouseEnter={(e) => (e.target.style.color = "var(--accent-primary)")}
+              onMouseLeave={(e) => (e.target.style.color = "var(--text-secondary)")}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Right: theme toggle + auth + cart */}
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          {/* Theme toggle */}
+          <ThemeToggle />
+
+          {/* User Auth */}
+          {user ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <Link
+                href="/profile"
+                style={{
+                  fontSize: "0.78rem",
+                  letterSpacing: "0.05em",
+                  color: "var(--text-primary)",
+                  fontWeight: 500,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  textDecoration: "none",
+                  transition: "color 0.2s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent-primary)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
+              >
+                <User size={15} strokeWidth={1.5} />
+                {user.profile?.full_name || user.email?.split("@")[0]}
+              </Link>
+              <button
+                onClick={handleSignOut}
+                title="Sign Out"
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--text-secondary)",
+                  display: "flex",
+                  alignItems: "center",
+                  transition: "color 0.2s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
+              >
+                <LogOut size={15} strokeWidth={1.5} />
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              style={{
+                fontSize: "0.78rem",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--text-secondary)",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                transition: "color 0.2s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
+            >
+              <User size={15} strokeWidth={1.5} />
+              <span className="login-label">Login</span>
+            </Link>
+          )}
+
+          {/* Cart button */}
+          <button
+            onClick={openCart}
+            aria-label="Open cart"
+            suppressHydrationWarning
+            style={{
+              background: "var(--bg-card)",
+              border: "1px solid var(--border)",
+              borderRadius: "20px",
+              cursor: "pointer",
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              color: "var(--text-primary)",
+              padding: "6px 14px",
+              transition: "all 0.2s ease",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "var(--accent-primary)";
+              e.currentTarget.style.color = "var(--accent-primary)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "var(--border)";
+              e.currentTarget.style.color = "var(--text-primary)";
+            }}
+          >
+            <ShoppingBag size={18} strokeWidth={1.5} />
+            <span style={{ fontSize: "0.85rem", fontWeight: 500, letterSpacing: "0.05em" }}>Cart</span>
+
+            {/* Cart count badge */}
+            {totalItems > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "-6px",
+                  right: "-6px",
+                  background: "var(--accent-primary)",
+                  color: "var(--color-white)",
+                  borderRadius: "50%",
+                  width: "20px",
+                  height: "20px",
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "2px solid var(--surface-primary)",
+                }}
+              >
+                {totalItems > 99 ? "99+" : totalItems}
+              </span>
+            )}
+          </button>
+
+          {/* Mobile menu toggle */}
+          <button
+            onClick={() => setMenuOpen((o) => !o)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--text-primary)",
+              display: "none",
+              padding: "4px",
+            }}
+            className="mobile-menu-btn"
+            aria-label="Toggle menu"
+          >
+            {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile menu */}
+      {menuOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: "72px",
+            left: 0,
+            right: 0,
+            background: "var(--surface-primary)",
+            borderBottom: "1px solid var(--border-soft)",
+            padding: "20px 24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            zIndex: 99,
+            boxShadow: "0 8px 24px rgba(14,14,14,0.08)",
+          }}
+        >
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              style={{
+                fontSize: "0.9rem",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--text-secondary)",
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
+          {user ? (
+            <>
+              <Link
+                href="/profile"
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  fontSize: "0.9rem",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                Profile ({user.profile?.full_name || user.email?.split("@")[0]})
+              </Link>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleSignOut();
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  textAlign: "left",
+                  fontSize: "0.9rem",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "var(--text-secondary)",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                fontSize: "0.9rem",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--text-secondary)",
+              }}
+            >
+              Login
+            </Link>
+          )}
+        </div>
+      )}
+
+
+
+    </nav>
+  );
+}

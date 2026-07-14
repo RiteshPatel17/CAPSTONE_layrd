@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.env.local
+
+# Tracking & Phase planning
+implementation/
+todoak.md
+PHASES.md
