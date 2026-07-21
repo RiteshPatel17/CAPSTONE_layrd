@@ -31,7 +31,14 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env.local
+git add -f .env.example
+git add .
+git commit -m "Fix skeleton: remove homepage file, track empty folders with placeholders"
+git push origin main
+git checkout ritesh
+git merge main
+npm install
 
 # vercel
 .vercel
