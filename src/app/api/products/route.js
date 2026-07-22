@@ -75,29 +75,3 @@ export async function GET(request) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-
-export async function POST(request) {
-  // Admin only – add a new product
-  try {
-    const body = await request.json();
-    const supabase = getSupabaseAdmin();
-    
-    // For now, minimal implementation. Auth is expected to be handled by middleware
-    // or by verifying the token here if not done yet.
-    // Assuming simple insert for now as stub.
-    const { data, error } = await supabase
-      .from("products")
-      .insert([body])
-      .select()
-      .single();
-      
-    if (error) {
-      console.error("[API Products] Insert error:", error);
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    
-    return NextResponse.json({ success: true, product: data }, { status: 201 });
-  } catch (err) {
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
