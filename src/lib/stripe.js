@@ -7,6 +7,7 @@ let stripeClient = null;
 export function getStripe() {
   if (!stripeClient && process.env.STRIPE_SECRET_KEY) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Stripe = require('stripe');
       stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY.trim(), { apiVersion: '2023-10-16' }); // latest supported version standard
     } catch (e) {
@@ -18,7 +19,7 @@ export function getStripe() {
 
 export async function createStripeCheckoutSession({ lineItems, successUrl, cancelUrl, customerEmail, metadata }) {
   const stripe = getStripe();
-  
+
   if (stripe) {
     try {
       const session = await stripe.checkout.sessions.create({

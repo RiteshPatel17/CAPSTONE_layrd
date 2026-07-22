@@ -43,11 +43,11 @@ export default function ConfirmModal({ open, title, message, confirmLabel = "Con
           boxShadow: "0 16px 48px rgba(14,14,14,0.16)",
         }}
       >
-        <h4 style={{ fontFamily: "'Cormorant Garamond', serif", marginBottom: "12px", color: "var(--text-primary)" }}>
+        <h4 style={{ marginBottom: "12px", color: "var(--text-primary)" }}>
           {title}
         </h4>
         {message && (
-          <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "28px", margin: "0 0 28px" }}>
+          <p style={{ fontSize: "20px", color: "var(--text-secondary)", marginBottom: "28px", margin: "0 0 28px" }}>
             {message}
           </p>
         )}

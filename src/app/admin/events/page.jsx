@@ -65,7 +65,8 @@ export default function AdminEventsPage() {
         />
       ) : (
         <div className="card" style={{ overflowX: "auto" }}>
-          <table className="admin-table" style={{ width: "100%", borderCollapse: "collapse", minWidth: "900px" }}>
+          <div className="table-responsive">
+<table className="admin-table" style={{ width: "100%", borderCollapse: "collapse", minWidth: "900px" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", textAlign: "left" }}>
                 <th style={{ padding: "16px 12px", width: "15%" }}>Date</th>
@@ -84,7 +85,7 @@ export default function AdminEventsPage() {
                     <div style={{ fontWeight: 500, color: "var(--color-sand)", marginBottom: "4px" }}>
                       {new Date(ev.event_date).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
                     </div>
-                    <div style={{ fontSize: "0.8rem", color: "var(--color-muted)" }}>
+                    <div style={{ fontSize: "16px", color: "var(--color-muted)" }}>
                       Submitted {new Date(ev.created_at).toLocaleDateString()}
                     </div>
                   </td>
@@ -92,7 +93,7 @@ export default function AdminEventsPage() {
                   <td style={{ padding: "16px 12px" }}>{ev.guest_count || "-"}</td>
                   <td style={{ padding: "16px 12px" }}>
                     {ev.core_cans + ev.limited_cans}
-                    <div style={{ fontSize: "0.75rem", color: "var(--color-muted)", marginTop: "2px" }}>
+                    <div style={{ fontSize: "14px", color: "var(--color-muted)", marginTop: "2px" }}>
                       {ev.core_cans} core, {ev.limited_cans} limited
                     </div>
                   </td>
@@ -101,7 +102,7 @@ export default function AdminEventsPage() {
                       whiteSpace: "nowrap", 
                       overflow: "hidden", 
                       textOverflow: "ellipsis",
-                      fontSize: "0.85rem",
+                      fontSize: "16px",
                       color: "var(--color-text)"
                     }} title={ev.notes}>
                       {ev.notes || "-"}
@@ -121,21 +122,21 @@ export default function AdminEventsPage() {
                         <>
                           <button 
                             className="btn btn-outline" 
-                            style={{ padding: "6px 12px", fontSize: "0.75rem", fontWeight: 600, borderColor: "var(--color-success)", color: "var(--color-success)" }}
+                            style={{ padding: "6px 12px", fontSize: "14px", fontWeight: 600, borderColor: "var(--color-success)", color: "var(--color-success)" }}
                             onClick={() => handleUpdateStatus(ev.id, "Approved")}
                           >
                             Approve
                           </button>
                           <button 
                             className="btn btn-outline" 
-                            style={{ padding: "6px 12px", fontSize: "0.75rem", fontWeight: 600, borderColor: "var(--color-danger)", color: "var(--color-danger)" }}
+                            style={{ padding: "6px 12px", fontSize: "14px", fontWeight: 600, borderColor: "var(--color-danger)", color: "var(--color-danger)" }}
                             onClick={() => handleUpdateStatus(ev.id, "Rejected")}
                           >
                             Reject
                           </button>
                         </>
                       ) : (
-                        <span style={{ fontSize: "0.8rem", color: "var(--color-muted)" }}>No actions available</span>
+                        <span style={{ fontSize: "16px", color: "var(--color-muted)" }}>No actions available</span>
                       )}
                     </div>
                   </td>
@@ -143,6 +144,7 @@ export default function AdminEventsPage() {
               ))}
             </tbody>
           </table>
+</div>
         </div>
       )}
     </AdminLayout>

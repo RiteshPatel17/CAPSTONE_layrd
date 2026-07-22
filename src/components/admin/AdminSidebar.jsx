@@ -21,6 +21,7 @@ import {
   CircleHelp,
   Settings,
   ArrowLeft,
+  X
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -38,7 +39,7 @@ const NAV_ITEMS = [
   { href: "/admin/settings",       label: "Settings",       Icon: Settings },
 ];
 
-export default function AdminSidebar({ onLogout }) {
+export default function AdminSidebar({ onLogout, isOpen, onClose }) {
   const pathname = usePathname();
 
   function isActive(href) {
@@ -47,7 +48,7 @@ export default function AdminSidebar({ onLogout }) {
   }
 
   return (
-    <aside style={{
+    <aside className={`admin-sidebar ${isOpen ? 'open' : ''}`} style={{
       width: "220px",
       flexShrink: 0,
       minHeight: "100vh",
@@ -60,19 +61,22 @@ export default function AdminSidebar({ onLogout }) {
       <div style={{
         padding: "22px 20px 18px",
         borderBottom: "1px solid rgba(232,223,210,0.12)",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
       }}>
+        <div>
         <div style={{
-          fontFamily: "'Cormorant Garamond', serif",
-          fontSize: "1.25rem",
+          fontSize: "24px",
           fontWeight: 700,
           letterSpacing: "0.22em",
           color: "#FAF8F3",
-          lineHeight: 1,
+          lineHeight: "100%",
         }}>
           LÄYRD
         </div>
         <div style={{
-          fontSize: "0.6rem",
+          fontSize: "24px",
           letterSpacing: "0.18em",
           textTransform: "uppercase",
           color: "#77736B",
@@ -80,6 +84,19 @@ export default function AdminSidebar({ onLogout }) {
         }}>
           Admin Panel
         </div>
+        </div>
+        {/* Mobile close button (only visible if we want, but typically hidden on desktop by CSS, or we can just render it conditionally or let CSS hide it) */}
+        {isOpen && (
+          <button 
+            onClick={onClose}
+            className="md:hidden"
+            style={{
+              background: 'none', border: 'none', color: '#77736B', cursor: 'pointer', padding: '4px'
+            }}
+          >
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {/* ── Nav ── */}
@@ -93,7 +110,7 @@ export default function AdminSidebar({ onLogout }) {
                 alignItems: "center",
                 gap: "10px",
                 padding: "9px 20px",
-                fontSize: "0.82rem",
+                fontSize: "16px",
                 fontWeight: active ? 500 : 400,
                 color: active ? "#FAF8F3" : "#A19D94",
                 background: active ? "rgba(184,155,94,0.12)" : "transparent",
@@ -140,7 +157,7 @@ export default function AdminSidebar({ onLogout }) {
         {/* Back to store */}
         <Link href="/" style={{ display: "block" }}>
           <div style={{
-            fontSize: "0.75rem",
+            fontSize: "14px",
             color: "#77736B",
             display: "flex",
             alignItems: "center",

@@ -58,7 +58,7 @@ export default function ProfilePage() {
       <div className="container" style={{ maxWidth: "1000px" }}>
         
         <div style={{ marginBottom: "48px" }}>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", marginBottom: "8px" }}>
+          <h1 style={{ marginBottom: "8px" }}>
             My Account
           </h1>
           <p style={{ color: "var(--text-muted)" }}>
@@ -72,14 +72,14 @@ export default function ProfilePage() {
           {/* User Header */}
           <div className="card" style={{ padding: "32px", marginBottom: "32px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-              <div style={{ width: "72px", height: "72px", borderRadius: "50%", background: "var(--bg-soft)", color: "var(--text-main)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.8rem", fontWeight: 600, border: "1px solid var(--border-soft)" }}>
+              <div style={{ width: "72px", height: "72px", borderRadius: "50%", background: "var(--bg-soft)", color: "var(--text-main)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", fontWeight: 600, border: "1px solid var(--border-soft)" }}>
                 {user.profile?.full_name?.charAt(0) || user.email.charAt(0).toUpperCase()}
               </div>
               <div>
-                <h3 style={{ fontSize: "1.6rem", fontFamily: "'Cormorant Garamond', serif", color: "var(--text-main)", marginBottom: "4px" }}>
+                <h3 style={{ fontSize: "32px", color: "var(--text-main)", marginBottom: "4px" }}>
                   {user.profile?.full_name || "User"}
                 </h3>
-                <p style={{ fontSize: "1rem", color: "var(--accent)" }}>
+                <p style={{ fontSize: "20px", color: "var(--accent)" }}>
                   {user.email}
                 </p>
               </div>
@@ -100,7 +100,7 @@ export default function ProfilePage() {
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                       <tab.icon size={22} style={{ color: "var(--accent)" }} />
-                      <span style={{ fontWeight: 500, fontSize: "1.1rem" }}>{tab.label}</span>
+                      <span style={{ fontWeight: 500, fontSize: "20px" }}>{tab.label}</span>
                     </div>
                     <ChevronDown
                       size={20}

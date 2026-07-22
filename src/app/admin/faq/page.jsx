@@ -117,7 +117,7 @@ export default function AdminFaqPage() {
       {saved && (
         <div style={{
           background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)",
-          color: "#4ade80", padding: "10px 16px", borderRadius: "4px", fontSize: "0.85rem", marginBottom: "20px",
+          color: "#4ade80", padding: "10px 16px", borderRadius: "4px", fontSize: "16px", marginBottom: "20px",
         }}>
           ✓ FAQ saved successfully.
         </div>
@@ -131,7 +131,7 @@ export default function AdminFaqPage() {
             <td style={{ fontWeight: 500, maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.question}</td>
             <td>
               <span style={{ 
-                padding: "2px 8px", borderRadius: "12px", fontSize: "0.75rem", 
+                padding: "2px 8px", borderRadius: "12px", fontSize: "14px", 
                 background: f.is_published ? "rgba(74,222,128,0.1)" : "rgba(239,68,68,0.1)",
                 color: f.is_published ? "#4ade80" : "#ef4444"
               }}>
@@ -155,12 +155,12 @@ export default function AdminFaqPage() {
             background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "4px", padding: "32px",
             width: "100%", maxWidth: "600px", maxHeight: "90vh", overflowY: "auto", position: "relative"
           }}>
-            <h2 style={{ fontSize: "1.2rem", marginBottom: "24px", color: "var(--color-text)" }}>
+            <h2 style={{ fontSize: "24px", marginBottom: "24px", color: "var(--color-text)" }}>
               {editTarget ? "Edit FAQ" : "Add FAQ"}
             </h2>
 
             <form onSubmit={handleSaveForm} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div className="responsive-grid-2" style={{ gap: "16px" }}>
                 <AdminFormField label="Category">
                   <input required className="input" placeholder="e.g. General, Shipping" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
                 </AdminFormField>
@@ -177,7 +177,7 @@ export default function AdminFaqPage() {
                 <textarea required className="input" rows={4} placeholder="Type the answer..." value={form.answer} onChange={(e) => setForm({ ...form, answer: e.target.value })} />
               </AdminFormField>
 
-              <label style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--color-text)", fontSize: "0.85rem", cursor: "pointer" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--color-text)", fontSize: "16px", cursor: "pointer" }}>
                 <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} style={{ accentColor: "var(--color-accent)" }} />
                 Published (visible on website)
               </label>

@@ -42,14 +42,14 @@ export default function FAQPage() {
       <div className="container" style={{ maxWidth: "800px" }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "48px" }}>
-          <p style={{ fontSize: "0.72rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--color-accent)", marginBottom: "12px" }}>
+          <p style={{ fontSize: "14px", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--color-accent)", marginBottom: "12px" }}>
             Help Centre
           </p>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", marginBottom: "12px" }}>
+          <h1 style={{ marginBottom: "12px" }}>
             Frequently Asked Questions
           </h1>
           <div className="divider-accent" style={{ margin: "0 auto 16px" }} />
-          <p style={{ fontSize: "0.95rem" }}>
+          <p style={{ fontSize: "20px" }}>
             Can't find what you're looking for?{" "}
             <a href="/contact" style={{ color: "var(--color-accent)", borderBottom: "1px solid var(--color-accent)" }}>
               Contact us
@@ -87,7 +87,7 @@ export default function FAQPage() {
                 <span style={{ fontWeight: 500, paddingRight: "16px" }}>{faq.question}</span>
                 <span
                   style={{
-                    fontSize: "1.2rem",
+                    fontSize: "24px",
                     color: "var(--color-accent)",
                     flexShrink: 0,
                     transition: "transform 0.25s",
@@ -101,7 +101,7 @@ export default function FAQPage() {
               {openId === faq.id && (
                 <div className="accordion-content animate-fade-in">
                   {faq.answer.split("\n").map((line, i) => (
-                    <p key={i} style={{ fontSize: "0.9rem", lineHeight: 1.8, marginBottom: line.startsWith("•") ? "4px" : "0" }}>
+                    <p key={i} style={{ fontSize: "20px", lineHeight: "160%", marginBottom: line.startsWith("•") ? "4px" : "0" }}>
                       {line}
                     </p>
                   ))}
@@ -124,10 +124,10 @@ export default function FAQPage() {
             background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "4px",
           }}
         >
-          <h3 style={{ fontFamily: "'Cormorant Garamond', serif", marginBottom: "12px" }}>
+          <h3 style={{ marginBottom: "12px" }}>
             Still have questions?
           </h3>
-          <p style={{ marginBottom: "24px", fontSize: "0.9rem" }}>
+          <p style={{ marginBottom: "24px", fontSize: "20px" }}>
             Reach us at <a href="mailto:info@layrd.org" style={{ color: "var(--color-accent)" }}>info@layrd.org</a> or{" "}
             <a href="tel:4033993903" style={{ color: "var(--color-accent)" }}>403-399-3903</a>
           </p>

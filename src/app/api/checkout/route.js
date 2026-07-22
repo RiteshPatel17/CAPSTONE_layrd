@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createStripeCheckoutSession } from "../../../lib/stripe.js";
-import { sendOrderConfirmationEmail, sendNewOrderNotification } from "../../../lib/resend.js";
+
 
 // Bypass RLS for backend operations
 const supabaseAdmin = createClient(
@@ -12,9 +12,9 @@ const supabaseAdmin = createClient(
 export async function POST(request) {
   try {
     const payload = await request.json();
-    const { 
-      items, contactInfo, method, address, deliveryFee, 
-      selectedDate, selectedTime, paymentMethod, promoCode, notes, totals 
+    const {
+      items, contactInfo, method, address, deliveryFee,
+      selectedDate, selectedTime, paymentMethod, promoCode, notes, totals
     } = payload;
 
     if (!items || items.length === 0) {
@@ -28,13 +28,13 @@ export async function POST(request) {
       customer_name: contactInfo.name,
       customer_email: contactInfo.email,
       customer_phone: contactInfo.phone,
-      delivery_method: method,
+      fulfillment: method,
       delivery_address: address,
       delivery_fee: deliveryFee || 0,
       pickup_date: selectedDate,
       pickup_time: selectedTime,
       payment_method: paymentMethod,
-      payment_status: "pending",
+      payment_status: 'Unpaid',
       subtotal: totals.subtotal,
       discount: totals.discount || 0,
       gst: totals.gst,
@@ -56,18 +56,21 @@ export async function POST(request) {
 
     if (orderError || !order) {
       console.error("[Checkout] Order creation failed:", orderError);
-      return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+      return NextResponse.json({ error: orderError?.message || orderError?.details || "Failed to create order" }, { status: 500 });
     }
 
     // 2. Create order items
     const orderItemsData = items.map(item => ({
       order_id: order.id,
       product_id: item.id,
-      product_name: item.name,
-      size_ml: item.size || null,
+      name: item.name,
+      size: item.size || null,
       quantity: item.quantity,
       unit_price: item.price,
-      sweetness: item.sweetness || null
+      sweetness: item.sweetness || null,
+      flavour: item.name,
+      category: item.category || 'cake',
+      type: item.type || 'can'
     }));
 
     const { error: itemsError } = await supabaseAdmin
@@ -82,7 +85,7 @@ export async function POST(request) {
     // 3. Handle Stripe Session
     if (paymentMethod === "stripe") {
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-      const successUrl = `${baseUrl}/confirmation?order=${order.order_number}`;
+      const successUrl = `${baseUrl}/confirmation?order=${order.id}`;
       const cancelUrl = `${baseUrl}/checkout`;
 
       // Map cart items to Stripe line items
@@ -116,13 +119,13 @@ export async function POST(request) {
       // For this implementation, if there is a discount, we might need a custom negative line item 
       // or to adjust unit prices. Since Stripe doesn't allow negative line items directly easily, 
       // we'll pass the exact totals if possible or just use a placeholder session.
-      
+
       const session = await createStripeCheckoutSession({
         lineItems,
         successUrl,
         cancelUrl,
         customerEmail: contactInfo.email,
-        metadata: { orderId: order.id, orderNumber: order.order_number }
+        metadata: { orderId: order.id, orderNumber: order.id }
       });
 
       // Update order with session ID
@@ -135,23 +138,46 @@ export async function POST(request) {
 
     // Return success for non-stripe methods
     // Send order confirmation and notification for non-stripe orders immediately
-    await sendOrderConfirmationEmail({
-      to: contactInfo.email,
-      orderNumber: order.order_number,
-      items: items,
-      total: totals.total,
-      pickupDate: selectedDate,
-      deliveryMethod: method
-    });
+    if (promoCode) {
+      try {
+        await fetch(`${process.env.PROMO_SERVICE_URL}/api/promo/increment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-internal-key': process.env.INTERNAL_SERVICE_KEY
+          },
+          body: JSON.stringify({ code: promoCode.code })
+        });
+      } catch (err) {
+        console.error("[Checkout] Failed to increment promo usage:", err);
+      }
+    }
 
-    await sendNewOrderNotification({
-      orderNumber: order.order_number,
-      items: items,
-      total: totals.total,
-      customerEmail: contactInfo.email
-    });
+    fetch(`${process.env.NOTIFICATIONS_SERVICE_URL}/api/emails/order-confirmation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-internal-key': process.env.INTERNAL_SERVICE_KEY },
+      body: JSON.stringify({
+        to: contactInfo.email,
+        orderNumber: order.id,
+        items: items,
+        total: totals.total,
+        pickupDate: selectedDate,
+        deliveryMethod: method
+      })
+    }).catch(err => console.error("[Checkout] Failed to call notifications-service (confirmation):", err));
 
-    return NextResponse.json({ orderId: order.order_number });
+    fetch(`${process.env.NOTIFICATIONS_SERVICE_URL}/api/emails/new-order-admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-internal-key': process.env.INTERNAL_SERVICE_KEY },
+      body: JSON.stringify({
+        orderNumber: order.id,
+        items: items,
+        total: totals.total,
+        customerEmail: contactInfo.email
+      })
+    }).catch(err => console.error("[Checkout] Failed to call notifications-service (admin):", err));
+
+    return NextResponse.json({ orderId: order.id });
   } catch (err) {
     console.error("[Checkout API] Unexpected error:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

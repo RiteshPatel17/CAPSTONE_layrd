@@ -30,45 +30,19 @@ export default function HomePage() {
         }}
       >
         {/* Decorative rings */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            width: "600px",
-            height: "600px",
-            border: "1px solid rgba(184,155,94,0.12)",
-            borderRadius: "50%",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            pointerEvents: "none",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            width: "900px",
-            height: "900px",
-            border: "1px solid rgba(184,155,94,0.06)",
-            borderRadius: "50%",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            pointerEvents: "none",
-          }}
-        />
+        <div className="hero-decorative-ring-1" aria-hidden="true" />
+        <div className="hero-decorative-ring-2" aria-hidden="true" />
 
         <div className="animate-fade-in" style={{ position: "relative", zIndex: 1 }}>
           {/* Pre-title */}
           <p
             style={{
-              fontSize: "0.72rem",
+              fontSize: "14px",
               letterSpacing: "0.3em",
               textTransform: "uppercase",
               color: "var(--accent-primary)",
               marginBottom: "20px",
-              fontWeight: 500,
+              fontWeight: 600,
             }}
           >
             Calgary · Boutique Desserts
@@ -77,12 +51,11 @@ export default function HomePage() {
           {/* Brand name */}
           <h1
             style={{
-              fontFamily: "'Cormorant Garamond', Georgia, serif",
-              fontSize: "clamp(4rem, 12vw, 10rem)",
-              fontWeight: 700,
+              fontSize: "100px",
+              fontWeight: 500,
               letterSpacing: "0.25em",
               color: "var(--text-primary)",
-              lineHeight: 0.9,
+              lineHeight: "100%",
               marginBottom: "24px",
             }}
           >
@@ -102,80 +75,56 @@ export default function HomePage() {
           {/* Tagline */}
           <p
             style={{
-              fontFamily: "'Cormorant Garamond', serif",
-              fontSize: "clamp(1rem, 2.5vw, 1.5rem)",
+              fontSize: "20px",
               color: "var(--text-secondary)",
               letterSpacing: "0.1em",
               marginBottom: "48px",
               fontStyle: "italic",
+              fontWeight: 500,
             }}
           >
             {BRAND.tagline}
           </p>
 
           {/* CTA buttons */}
-          <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/shop">
-              <button className="btn btn-primary btn-lg">Shop Now</button>
+          <div className="hero-actions">
+            <Link href="/shop" className="btn btn-primary hero-action">
+              Shop Now
             </Link>
-            <Link href="/events">
-              <button className="btn btn-outline btn-lg">Private Events</button>
+            <Link href="/events" className="btn btn-outline hero-action">
+              Events
             </Link>
           </div>
         </div>
 
-        {/* Scroll hint */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "32px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "8px",
-            animation: "fadeIn 1s ease 1s both",
-          }}
-        >
-          <span style={{ fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--text-secondary)", opacity: 0.7 }}>
-            Scroll
-          </span>
-          <div
-            style={{
-              width: "1px",
-              height: "40px",
-              background: "linear-gradient(to bottom, var(--accent-primary), transparent)",
-            }}
-          />
-        </div>
+
       </section>
 
       {/* ─── Featured Products ─── */}
       <section className="section" style={{ background: "var(--bg-secondary)" }}>
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
-            <p style={{ fontSize: "0.72rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-primary)", marginBottom: "12px" }}>
+            <p style={{ fontSize: "14px", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-primary)", marginBottom: "12px" }}>
               Handcrafted
             </p>
-            <h2 style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+            <h2 style={{}}>
               Our Signature Flavours
             </h2>
             <div className="divider-accent" style={{ margin: "16px auto" }} />
-            <p style={{ maxWidth: "480px", margin: "0 auto", fontSize: "0.95rem" }}>
+            <p style={{ maxWidth: "480px", margin: "0 auto", fontSize: "20px" }}>
               Premium cheesecakes and tiramisus, crafted fresh and served in convenient 250ml cans.
             </p>
           </div>
 
-          <div className="product-grid">
+          <div className="homepage-product-grid">
             {featuredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
           <div style={{ textAlign: "center", marginTop: "40px" }}>
-            <Link href="/shop">
-              <button className="btn btn-outline">View All Flavours</button>
+            <Link href="/shop" className="btn btn-outline">
+              View All Flavours
             </Link>
           </div>
         </div>
@@ -185,15 +134,14 @@ export default function HomePage() {
       <section className="section">
         <div className="container">
           <div
+            className="responsive-grid-2"
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "64px",
+              gap: "32px",
               alignItems: "center",
             }}
           >
             <div>
-              <p style={{ fontSize: "0.72rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-primary)", marginBottom: "12px" }}>
+              <p style={{ fontSize: "14px", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-primary)", marginBottom: "12px" }}>
                 Our Story
               </p>
               <h2 style={{ marginBottom: "20px" }}>
@@ -210,8 +158,8 @@ export default function HomePage() {
                 Made fresh in Calgary&apos;s Pineridge NE neighbourhood. Available for pickup and
                 Calgary-wide delivery.
               </p>
-              <Link href="/shop">
-                <button className="btn btn-primary">Explore the Shop</button>
+              <Link href="/shop" className="btn btn-primary">
+                Explore the Shop
               </Link>
             </div>
 
@@ -226,8 +174,7 @@ export default function HomePage() {
             >
               <h4
                 style={{
-                  fontFamily: "'Cormorant Garamond', serif",
-                  fontSize: "1.4rem",
+                  fontSize: "24px",
                   marginBottom: "8px",
                   color: "var(--text-primary)",
                 }}
@@ -239,7 +186,7 @@ export default function HomePage() {
                 {STORAGE_INFO.map((info, i) => (
                   <div key={i} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
                     <span style={{ color: "var(--accent-primary)", flexShrink: 0, marginTop: "2px" }}>✦</span>
-                    <span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>{info}</span>
+                    <span style={{ fontSize: "20px", color: "var(--text-secondary)" }}>{info}</span>
                   </div>
                 ))}
               </div>
@@ -259,7 +206,7 @@ export default function HomePage() {
                   strokeWidth={1.5}
                   style={{ color: "var(--text-secondary)", flexShrink: 0, marginTop: "2px" }}
                 />
-                <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
+                <p style={{ fontSize: "14px", color: "var(--text-secondary)", lineHeight: "160%", margin: 0 }}>
                   Contains dairy, gluten, and may contain nuts. Check individual product pages for full allergen info.
                 </p>
               </div>
@@ -291,10 +238,10 @@ export default function HomePage() {
             }}
           >
             {[
-              { Icon: Truck,        title: "Calgary Delivery",  text: "Fast delivery across Calgary from $5" },
-              { Icon: MapPin,       title: "Pickup Available",  text: "Order online, collect in Pineridge NE" },
-              { Icon: CalendarDays, title: "Private Events",    text: "Custom orders with AI-designed labels" },
-              { Icon: Store,        title: "Wholesale",         text: "Trade pricing for retailers & food service" },
+              { Icon: Truck, title: "Calgary Delivery", text: "Fast delivery across Calgary from $5" },
+              { Icon: MapPin, title: "Pickup Available", text: "Order online, collect in Pineridge NE" },
+              { Icon: CalendarDays, title: "Private Events", text: "Custom orders with AI-designed labels" },
+              { Icon: Store, title: "Wholesale", text: "Trade pricing for retailers & food service" },
             ].map((item) => (
               <div key={item.title}>
                 <div
@@ -314,8 +261,7 @@ export default function HomePage() {
                 </div>
                 <h5
                   style={{
-                    fontFamily: "Inter, sans-serif",
-                    fontSize: "0.85rem",
+                    fontSize: "20px",
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
                     color: "var(--text-primary)",
@@ -324,7 +270,7 @@ export default function HomePage() {
                 >
                   {item.title}
                 </h5>
-                <p style={{ fontSize: "0.825rem", color: "var(--text-secondary)" }}>{item.text}</p>
+                <p style={{ fontSize: "20px", color: "var(--text-secondary)" }}>{item.text}</p>
               </div>
             ))}
           </div>
@@ -354,11 +300,11 @@ export default function HomePage() {
           <h2 style={{ marginBottom: "20px" }}>
             Ready to Get <em style={{ color: "var(--accent-primary)", fontStyle: "italic" }}>LÄYRD</em>?
           </h2>
-          <p style={{ maxWidth: "400px", margin: "0 auto 36px", fontSize: "0.95rem" }}>
+          <p style={{ maxWidth: "400px", margin: "0 auto 36px", fontSize: "20px" }}>
             Order online and enjoy premium desserts at home. Minimum 4 items for delivery.
           </p>
-          <Link href="/shop">
-            <button className="btn btn-primary btn-lg">Shop the Collection</button>
+          <Link href="/shop" className="btn btn-primary btn-lg">
+            Shop the Collection
           </Link>
         </div>
       </section>

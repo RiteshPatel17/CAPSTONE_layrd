@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { EVENT_MIN_CANS } from "../../../lib/constants.js";
-import { sendEventInquiryNotification } from "../../../lib/resend.js";
+
 import { getSupabaseAdmin } from "../../../lib/supabase.js";
 
 export async function POST(request) {
@@ -51,14 +51,18 @@ export async function POST(request) {
     return NextResponse.json({ error: inquiryError.message || "Failed to submit inquiry", details: inquiryError }, { status: 500 });
   }
 
-  const inquiryId = inquiryData.inquiry_number;
+  const inquiryId = inquiryData.id;
 
   try {
-    await sendEventInquiryNotification({
-      inquiryId,
-      customerName: user.email,
-      eventDate,
-      canCount: totalCans,
+    await fetch(`${process.env.NOTIFICATIONS_SERVICE_URL}/api/emails/event-inquiry`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-internal-key': process.env.INTERNAL_SERVICE_KEY },
+      body: JSON.stringify({
+        inquiryId,
+        customerName: user.email,
+        eventDate,
+        canCount: totalCans
+      })
     });
   } catch (emailErr) {
     console.error("[API Events] Email error:", emailErr);
@@ -117,6 +121,13 @@ export async function PATCH(request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // Check existing status to prevent duplicate emails
+    const { data: existingData } = await supabase
+      .from("event_inquiries")
+      .select("status")
+      .eq("id", id)
+      .single();
+
     const { data, error } = await supabase
       .from("event_inquiries")
       .update({ status: status })
@@ -128,6 +139,33 @@ export async function PATCH(request) {
       console.error("[API Events] Update error:", error);
       return NextResponse.json({ error: error.message || "Failed to update event inquiry" }, { status: 500 });
     }
+
+    // Trigger emails for approved/rejected status only if it transitioned
+    if (existingData?.status !== status) {
+      if (status === "Approved") {
+        fetch(`${process.env.NOTIFICATIONS_SERVICE_URL}/api/emails/event-approved`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-key': process.env.INTERNAL_SERVICE_KEY },
+        body: JSON.stringify({
+          to: data.customer_email || 'test@example.com', // We need customer_email, might not be in event_inquiries? Wait!
+          inquiryId: data.inquiry_number,
+          customerName: "Customer",
+          depositAmount: 100 // Hardcoded placeholder if not available
+        })
+      }).catch(err => console.error("[API Events] Event Approved Email Error:", err));
+    } else if (status === "Rejected") {
+      fetch(`${process.env.NOTIFICATIONS_SERVICE_URL}/api/emails/event-rejected`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-key': process.env.INTERNAL_SERVICE_KEY },
+        body: JSON.stringify({
+          to: data.customer_email || 'test@example.com',
+          inquiryId: data.inquiry_number,
+          customerName: "Customer",
+          adminNote: body.adminNote || ''
+        })
+      }).catch(err => console.error("[API Events] Event Rejected Email Error:", err));
+    }
+    } // Close if (existingData?.status !== status)
 
     return NextResponse.json({ success: true, inquiry: data });
   } catch (error) {

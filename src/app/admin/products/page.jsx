@@ -130,7 +130,7 @@ export default function AdminProductsPage() {
           color: "#4ade80",
           padding: "10px 16px",
           borderRadius: "4px",
-          fontSize: "0.85rem",
+          fontSize: "16px",
           marginBottom: "20px",
         }}>
           ✓ Product saved successfully.
@@ -181,12 +181,12 @@ export default function AdminProductsPage() {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
-              <h4 style={{ fontFamily: "'Cormorant Garamond', serif", margin: 0 }}>
+              <h4 style={{ margin: 0 }}>
                 {editTarget ? "Edit Product" : "Add Product"}
               </h4>
               <button
                 onClick={closeForm}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-sand)", fontSize: "1.3rem" }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-sand)", fontSize: "24px" }}
               >
                 ×
               </button>
@@ -194,7 +194,7 @@ export default function AdminProductsPage() {
 
             <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {/* Row 1 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div className="responsive-grid-2" style={{ gap: "16px" }}>
                 <AdminFormField label="Product Name" required>
                   <input
                     className="input" required
@@ -214,7 +214,7 @@ export default function AdminProductsPage() {
               </div>
 
               {/* Row 2 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "16px" }}>
+              <div className="responsive-grid-4" style={{ gap: "16px" }}>
                 <AdminFormField label="Category" required>
                   <select className="input" value={form.category} onChange={(e) => handleField("category", e.target.value)}>
                     {PRODUCT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -241,7 +241,7 @@ export default function AdminProductsPage() {
               </div>
 
               {/* Row 3 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div className="responsive-grid-2" style={{ gap: "16px" }}>
                 <AdminFormField label="Status" required>
                   <select className="input" value={form.status} onChange={(e) => handleField("status", e.target.value)}>
                     {PRODUCT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -302,7 +302,7 @@ export default function AdminProductsPage() {
                   style={{ padding: "8px" }}
                 />
                 {editTarget && editTarget.image && typeof form.image === 'string' && (
-                  <div style={{ marginTop: "8px", fontSize: "0.85rem", color: "var(--color-muted)" }}>
+                  <div style={{ marginTop: "8px", fontSize: "16px", color: "var(--color-muted)" }}>
                     Current image: <a href={form.image} target="_blank" rel="noreferrer" style={{ color: "var(--color-accent)", textDecoration: "underline" }}>View</a>
                   </div>
                 )}

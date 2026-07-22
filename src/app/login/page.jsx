@@ -61,11 +61,11 @@ export default function LoginPage() {
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: "36px" }}>
           <Link href="/">
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2rem", fontWeight: 700, letterSpacing: "0.25em", color: "var(--color-cream)" }}>
+            <span style={{ fontSize: "48px", fontWeight: 700, letterSpacing: "0.25em", color: "var(--color-cream)" }}>
               {BRAND.name}
             </span>
           </Link>
-          <p style={{ fontSize: "0.78rem", color: "var(--color-sand)", marginTop: "6px", letterSpacing: "0.1em" }}>
+          <p style={{ fontSize: "16px", color: "var(--color-sand)", marginTop: "6px", letterSpacing: "0.1em" }}>
             Sign in to your account
           </p>
         </div>
@@ -79,7 +79,7 @@ export default function LoginPage() {
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
               <label className="label" style={{ margin: 0 }}>Password</label>
-              <Link href="/reset-password" style={{ fontSize: "0.75rem", color: "var(--color-accent)" }}>
+              <Link href="/reset-password" style={{ fontSize: "14px", color: "var(--color-accent)" }}>
                 Forgot password?
               </Link>
             </div>
@@ -88,7 +88,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <p style={{ fontSize: "0.82rem", color: "#f87171", background: "rgba(239,68,68,0.08)", padding: "10px 14px", borderRadius: "3px", border: "1px solid rgba(239,68,68,0.15)" }}>
+            <p style={{ fontSize: "16px", color: "#f87171", background: "rgba(239,68,68,0.08)", padding: "10px 14px", borderRadius: "3px", border: "1px solid rgba(239,68,68,0.15)" }}>
               {error}
             </p>
           )}
@@ -100,7 +100,7 @@ export default function LoginPage() {
 
         <div className="divider" />
 
-        <p style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--color-sand)" }}>
+        <p style={{ textAlign: "center", fontSize: "16px", color: "var(--color-sand)" }}>
           Don't have an account?{" "}
           <Link href="/signup" style={{ color: "var(--color-accent)" }}>Create one</Link>
         </p>

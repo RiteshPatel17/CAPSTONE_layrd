@@ -21,7 +21,7 @@ function StatusBadge({ status }) {
       display: "inline-block",
       padding: "2px 10px",
       borderRadius: "20px",
-      fontSize: "0.7rem",
+      fontSize: "14px",
       fontWeight: 600,
       letterSpacing: "0.08em",
       textTransform: "uppercase",
@@ -126,10 +126,9 @@ export default function AdminAILabelsPage() {
               border: `1px solid ${filter === f ? "var(--accent)" : "var(--border-soft)"}`,
               background: filter === f ? "rgba(184,155,94,0.12)" : "var(--surface)",
               color: filter === f ? "var(--accent)" : "var(--text-muted)",
-              fontSize: "0.78rem",
+              fontSize: "16px",
               fontWeight: 600,
               cursor: "pointer",
-              fontFamily: "'Inter', sans-serif",
               textTransform: "capitalize",
               letterSpacing: "0.05em",
               transition: "all 0.15s",
@@ -142,18 +141,18 @@ export default function AdminAILabelsPage() {
 
       {/* Empty state */}
       {loading ? (
-        <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Loading…</p>
+        <p style={{ color: "var(--text-muted)", fontSize: "20px" }}>Loading…</p>
       ) : filtered.length === 0 ? (
         <div style={{
           textAlign: "center", padding: "64px 24px",
           border: "1px dashed var(--border-soft)", borderRadius: "6px",
           color: "var(--text-muted)",
         }}>
-          <div style={{ fontSize: "2.5rem", marginBottom: "16px" }}>🏷️</div>
+          <div style={{ fontSize: "48px", marginBottom: "16px" }}>🏷️</div>
           <p style={{ fontWeight: 600, marginBottom: "4px", color: "var(--text-main)" }}>
             No {filter === "all" ? "" : filter} submissions yet
           </p>
-          <p style={{ fontSize: "0.85rem" }}>
+          <p style={{ fontSize: "16px" }}>
             Customers submit label copy from the{" "}
             <a href="/ai-label-studio" target="_blank" style={{ color: "var(--accent)" }}>
               AI Label Studio
@@ -189,8 +188,7 @@ export default function AdminAILabelsPage() {
                 {/* Label text + meta */}
                 <div style={{ minWidth: 0 }}>
                   <p style={{
-                    fontFamily: "'Cormorant Garamond', serif",
-                    fontSize: "1.05rem",
+                    fontSize: "20px",
                     color: "var(--text-main)",
                     fontStyle: "italic",
                     marginBottom: "4px",
@@ -200,7 +198,7 @@ export default function AdminAILabelsPage() {
                   }}>
                     "{s.labelText}"
                   </p>
-                  <p style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                  <p style={{ fontSize: "14px", color: "var(--text-muted)" }}>
                     <strong style={{ color: "var(--text-main)" }}>{s.customerName}</strong>
                     {" · "}{s.eventType}{" · "}{s.tone} tone
                     {" · "}{new Date(s.submittedAt).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })}
@@ -208,7 +206,7 @@ export default function AdminAILabelsPage() {
                 </div>
 
                 {/* ID */}
-                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontFamily: "monospace", flexShrink: 0 }}>
+                <span style={{ fontSize: "14px", color: "var(--text-muted)", flexShrink: 0 }}>
                   {s.id}
                 </span>
 
@@ -216,7 +214,7 @@ export default function AdminAILabelsPage() {
                 <StatusBadge status={s.status} />
 
                 {/* Chevron */}
-                <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", flexShrink: 0 }}>
+                <span style={{ color: "var(--text-muted)", fontSize: "16px", flexShrink: 0 }}>
                   {expandedId === s.id ? "▲" : "▼"}
                 </span>
               </div>
@@ -234,26 +232,23 @@ export default function AdminAILabelsPage() {
                     background: "#111", border: "1px solid var(--border-soft)",
                     borderRadius: "4px", textAlign: "center",
                   }}>
-                    <p style={{ fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "8px" }}>
+                    <p style={{ fontSize: "14px", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "8px" }}>
                       Label Preview
                     </p>
                     <p style={{
-                      fontFamily: "'Cormorant Garamond', serif", fontSize: "1.25rem",
-                      color: "#F7F3EA", fontStyle: "italic", lineHeight: 1.4,
+                      fontSize: "24px",
+                      color: "#F7F3EA", fontStyle: "italic", lineHeight: "140%",
                     }}>
                       {s.labelText}
                     </p>
                     <div style={{ width: "40px", height: "1px", background: "var(--accent)", margin: "12px auto 0" }} />
-                    <p style={{ fontSize: "0.6rem", letterSpacing: "0.15em", textTransform: "uppercase", color: "#77736B", marginTop: "8px" }}>
+                    <p style={{ fontSize: "14px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#77736B", marginTop: "8px" }}>
                       LÄYRD · Calgary
                     </p>
                   </div>
 
                   {/* Details */}
-                  <div style={{
-                    display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
-                    gap: "12px", marginBottom: "16px",
-                  }}>
+                  <div className="responsive-grid-2" style={{ gap: "20px", marginBottom: "16px" }}>
                     {[
                       ["Event ID", s.eventId],
                       ["Event Type", s.eventType],
@@ -266,8 +261,8 @@ export default function AdminAILabelsPage() {
                         background: "var(--surface)", border: "1px solid var(--border-soft)",
                         borderRadius: "4px", padding: "10px 14px",
                       }}>
-                        <p style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "3px" }}>{label}</p>
-                        <p style={{ fontSize: "0.85rem", color: "var(--text-main)", fontWeight: 500 }}>{val || "—"}</p>
+                        <p style={{ fontSize: "14px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "3px" }}>{label}</p>
+                        <p style={{ fontSize: "16px", color: "var(--text-main)", fontWeight: 500 }}>{val || "—"}</p>
                       </div>
                     ))}
                   </div>
@@ -275,7 +270,7 @@ export default function AdminAILabelsPage() {
                   {/* Admin note input */}
                   {s.status === "Pending" && (
                     <div style={{ marginBottom: "14px" }}>
-                      <label style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      <label style={{ fontSize: "14px", color: "var(--text-muted)", display: "block", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                         Note to customer (optional)
                       </label>
                       <input
@@ -286,8 +281,7 @@ export default function AdminAILabelsPage() {
                           width: "100%", padding: "8px 12px",
                           background: "var(--surface)", border: "1px solid var(--border-soft)",
                           borderRadius: "4px", color: "var(--text-main)",
-                          fontSize: "0.85rem", fontFamily: "'Inter', sans-serif",
-                          outline: "none", boxSizing: "border-box",
+                          fontSize: "16px", outline: "none", boxSizing: "border-box",
                         }}
                       />
                     </div>
@@ -298,7 +292,7 @@ export default function AdminAILabelsPage() {
                     <div style={{
                       marginBottom: "14px", padding: "10px 14px",
                       background: "var(--surface)", border: "1px solid var(--border-soft)",
-                      borderRadius: "4px", fontSize: "0.85rem", color: "var(--text-muted)",
+                      borderRadius: "4px", fontSize: "16px", color: "var(--text-muted)",
                     }}>
                       <strong style={{ color: "var(--text-main)" }}>Admin note: </strong>{s.adminNote}
                     </div>
@@ -313,9 +307,8 @@ export default function AdminAILabelsPage() {
                           style={{
                             padding: "8px 20px", borderRadius: "4px",
                             background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.4)",
-                            color: "#4ade80", fontSize: "0.82rem", fontWeight: 600,
-                            cursor: "pointer", fontFamily: "'Inter', sans-serif",
-                            transition: "background 0.15s",
+                            color: "#4ade80", fontSize: "16px", fontWeight: 600,
+                            cursor: "pointer", transition: "background 0.15s",
                           }}
                           onMouseEnter={(e) => e.currentTarget.style.background = "rgba(74,222,128,0.22)"}
                           onMouseLeave={(e) => e.currentTarget.style.background = "rgba(74,222,128,0.12)"}
@@ -327,9 +320,8 @@ export default function AdminAILabelsPage() {
                           style={{
                             padding: "8px 20px", borderRadius: "4px",
                             background: "rgba(248,113,113,0.10)", border: "1px solid rgba(248,113,113,0.35)",
-                            color: "#f87171", fontSize: "0.82rem", fontWeight: 600,
-                            cursor: "pointer", fontFamily: "'Inter', sans-serif",
-                            transition: "background 0.15s",
+                            color: "#f87171", fontSize: "16px", fontWeight: 600,
+                            cursor: "pointer", transition: "background 0.15s",
                           }}
                           onMouseEnter={(e) => e.currentTarget.style.background = "rgba(248,113,113,0.20)"}
                           onMouseLeave={(e) => e.currentTarget.style.background = "rgba(248,113,113,0.10)"}
@@ -344,9 +336,8 @@ export default function AdminAILabelsPage() {
                         style={{
                           padding: "8px 16px", borderRadius: "4px",
                           background: "var(--surface)", border: "1px solid var(--border-soft)",
-                          color: "var(--text-muted)", fontSize: "0.78rem",
-                          cursor: "pointer", fontFamily: "'Inter', sans-serif",
-                        }}
+                          color: "var(--text-muted)", fontSize: "16px",
+                          cursor: "pointer", }}
                       >
                         ↩ Reset to Pending
                       </button>
@@ -356,9 +347,8 @@ export default function AdminAILabelsPage() {
                       style={{
                         padding: "8px 14px", borderRadius: "4px",
                         background: "transparent", border: "1px solid var(--border-soft)",
-                        color: "var(--text-muted)", fontSize: "0.78rem",
-                        cursor: "pointer", fontFamily: "'Inter', sans-serif",
-                        marginLeft: "auto",
+                        color: "var(--text-muted)", fontSize: "16px",
+                        cursor: "pointer", marginLeft: "auto",
                       }}
                     >
                       Delete

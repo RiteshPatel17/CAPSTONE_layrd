@@ -14,33 +14,34 @@ export default function Footer() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "48px",
-            padding: "64px 0 48px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: "clamp(32px, 5vw, 64px)",
+            padding: "clamp(60px, 8vw, 120px) 0 clamp(40px, 5vw, 60px)",
+            maxWidth: "960px",
+            margin: "0 auto",
           }}
         >
           {/* Brand column */}
           <div>
             <div
               style={{
-                fontFamily: "'Cormorant Garamond', Georgia, serif",
-                fontSize: "2rem",
+                fontSize: "48px",
                 fontWeight: 700,
                 letterSpacing: "0.3em",
                 color: "var(--text-primary)",
-                marginBottom: "12px",
+                marginBottom: "8px",
               }}
             >
               {BRAND.name}
             </div>
-            <p style={{ fontSize: "0.85rem", lineHeight: 1.6, maxWidth: "240px" }}>
+            <p style={{ fontSize: "16px", lineHeight: "160%", maxWidth: "240px", marginBottom: "0" }}>
               {BRAND.tagline}
             </p>
             <p
               style={{
-                fontSize: "0.78rem",
+                fontSize: "24px",
                 color: "var(--text-secondary)",
-                marginTop: "8px",
+                marginTop: "16px",
               }}
             >
               {BRAND.pickupArea}
@@ -51,13 +52,12 @@ export default function Footer() {
           <div>
             <h5
               style={{
-                fontSize: "0.72rem",
+                fontSize: "16px",
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
                 color: "var(--text-secondary)",
-                marginBottom: "20px",
-                fontFamily: "Inter, sans-serif",
-              }}
+                marginBottom: "24px",
+                }}
             >
               Shop
             </h5>
@@ -67,7 +67,7 @@ export default function Footer() {
                   key={link.href}
                   href={link.href}
                   style={{
-                    fontSize: "0.875rem",
+                    fontSize: "16px",
                     color: "var(--text-secondary)",
                     transition: "color 0.2s",
                   }}
@@ -84,20 +84,19 @@ export default function Footer() {
           <div>
             <h5
               style={{
-                fontSize: "0.72rem",
+                fontSize: "14px",
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
                 color: "var(--text-secondary)",
-                marginBottom: "20px",
-                fontFamily: "Inter, sans-serif",
-              }}
+                marginBottom: "24px",
+                }}
             >
               Contact
             </h5>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <a
                 href={`mailto:${BRAND.email}`}
-                style={{ fontSize: "0.875rem", color: "var(--text-secondary)", transition: "color 0.2s" }}
+                style={{ fontSize: "16px", color: "var(--text-secondary)", transition: "color 0.2s" }}
                 onMouseEnter={(e) => (e.target.style.color = "var(--accent-primary)")}
                 onMouseLeave={(e) => (e.target.style.color = "var(--text-secondary)")}
               >
@@ -105,7 +104,7 @@ export default function Footer() {
               </a>
               <a
                 href={`tel:${BRAND.phone}`}
-                style={{ fontSize: "0.875rem", color: "var(--text-secondary)", transition: "color 0.2s" }}
+                style={{ fontSize: "16px", color: "var(--text-secondary)", transition: "color 0.2s" }}
                 onMouseEnter={(e) => (e.target.style.color = "var(--accent-primary)")}
                 onMouseLeave={(e) => (e.target.style.color = "var(--text-secondary)")}
               >
@@ -115,7 +114,7 @@ export default function Footer() {
                 href="https://www.instagram.com/l.a.y.r.d"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ fontSize: "0.875rem", color: "var(--text-secondary)", transition: "color 0.2s" }}
+                style={{ fontSize: "16px", color: "var(--text-secondary)", transition: "color 0.2s" }}
                 onMouseEnter={(e) => (e.target.style.color = "var(--accent-primary)")}
                 onMouseLeave={(e) => (e.target.style.color = "var(--text-secondary)")}
               >
@@ -128,13 +127,12 @@ export default function Footer() {
           <div>
             <h5
               style={{
-                fontSize: "0.72rem",
+                fontSize: "14px",
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
                 color: "var(--text-secondary)",
-                marginBottom: "20px",
-                fontFamily: "Inter, sans-serif",
-              }}
+                marginBottom: "24px",
+                }}
             >
               Business
             </h5>
@@ -149,7 +147,7 @@ export default function Footer() {
                   key={link.href}
                   href={link.href}
                   style={{
-                    fontSize: "0.875rem",
+                    fontSize: "16px",
                     color: "var(--text-secondary)",
                     transition: "color 0.2s",
                   }}
@@ -177,13 +175,13 @@ export default function Footer() {
             gap: "12px",
           }}
         >
-          <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+          <p style={{ fontSize: "16px", color: "var(--text-secondary)" }}>
             © {year} {BRAND.name}. All rights reserved. Calgary, AB.
           </p>
-          <div style={{ display: "flex", gap: "20px" }}>
+          <div className="flex-wrap" style={{ display: "flex", gap: "20px" }}>
             <Link
               href="/faq"
-              style={{ fontSize: "0.78rem", color: "var(--text-secondary)", transition: "color 0.2s" }}
+              style={{ fontSize: "16px", color: "var(--text-secondary)", transition: "color 0.2s" }}
               onMouseEnter={(e) => (e.target.style.color = "var(--accent-primary)")}
               onMouseLeave={(e) => (e.target.style.color = "var(--text-secondary)")}
             >
@@ -191,7 +189,7 @@ export default function Footer() {
             </Link>
             <Link
               href="/contact"
-              style={{ fontSize: "0.78rem", color: "var(--text-secondary)", transition: "color 0.2s" }}
+              style={{ fontSize: "16px", color: "var(--text-secondary)", transition: "color 0.2s" }}
               onMouseEnter={(e) => (e.target.style.color = "var(--accent-primary)")}
               onMouseLeave={(e) => (e.target.style.color = "var(--text-secondary)")}
             >

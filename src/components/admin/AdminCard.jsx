@@ -30,7 +30,7 @@ export default function AdminCard({ label, value, change, up, icon }) {
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <p style={{
-          fontSize: "0.72rem",
+          fontSize: "14px",
           letterSpacing: "0.12em",
           textTransform: "uppercase",
           color: "var(--text-secondary)",
@@ -45,17 +45,16 @@ export default function AdminCard({ label, value, change, up, icon }) {
         )}
       </div>
       <p style={{
-        fontFamily: "'Cormorant Garamond', serif",
-        fontSize: "2.4rem",
+        fontSize: "48px",
         fontWeight: 600,
         color: "var(--text-primary)",
-        lineHeight: 1,
+        lineHeight: "100%",
         margin: 0,
       }}>
         {value}
       </p>
       {change && (
-        <p style={{ fontSize: "0.78rem", color: changeColor, margin: 0 }}>
+        <p style={{ fontSize: "16px", color: changeColor, margin: 0 }}>
           {change}
         </p>
       )}

@@ -64,18 +64,18 @@ export default function AdminBusinessCodesPage() {
     <AdminLayout>
       <AdminPageHeader title="Business Codes" subtitle="Generate verification codes for wholesale accounts" />
       
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "24px", alignItems: "start" }}>
+      <div className="responsive-grid-3" style={{ gap: "16px" }}>
         
         {/* Generator Form */}
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "6px", padding: "24px" }}>
-          <h3 style={{ fontSize: "1rem", fontFamily: "'Cormorant Garamond', serif", marginBottom: "16px" }}>Generate New Code</h3>
-          <p style={{ fontSize: "0.85rem", color: "var(--color-muted)", marginBottom: "20px" }}>
+          <h3 style={{ fontSize: "20px", marginBottom: "16px" }}>Generate New Code</h3>
+          <p style={{ fontSize: "16px", color: "var(--color-muted)", marginBottom: "20px" }}>
             Generate a unique, single-use 6-digit access code for an approved wholesale client. Codes automatically expire after {BUSINESS_CODE_EXPIRY_HOURS} hours.
           </p>
           
           <form onSubmit={handleGenerate} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--color-muted)", marginBottom: "8px" }}>
+              <label style={{ display: "block", fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--color-muted)", marginBottom: "8px" }}>
                 Business Name
               </label>
               <input 
@@ -86,7 +86,7 @@ export default function AdminBusinessCodesPage() {
               />
             </div>
             
-            {error && <p style={{ color: "#f87171", fontSize: "0.8rem" }}>{error}</p>}
+            {error && <p style={{ color: "#f87171", fontSize: "16px" }}>{error}</p>}
             
             <button type="submit" disabled={generating} className="btn btn-primary" style={{ marginTop: "8px" }}>
               {generating ? "Generating..." : "Generate Code"}
@@ -106,7 +106,8 @@ export default function AdminBusinessCodesPage() {
             />
           ) : (
             <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "6px", overflow: "auto" }}>
-              <table className="table">
+              <div className="table-responsive">
+<table className="table">
                 <thead>
                   <tr>
                     <th>Code</th>
@@ -134,7 +135,6 @@ export default function AdminBusinessCodesPage() {
                       <tr key={c.id}>
                         <td>
                           <span style={{ 
-                            fontFamily: "monospace", 
                             background: "rgba(0,0,0,0.2)", 
                             padding: "4px 8px", 
                             borderRadius: "4px",
@@ -146,14 +146,14 @@ export default function AdminBusinessCodesPage() {
                         </td>
                         <td style={{ fontWeight: 500 }}>{c.business_name}</td>
                         <td>
-                          <span style={{ fontSize: "0.75rem", color: statusColor, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                          <span style={{ fontSize: "14px", color: statusColor, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
                             {statusLabel}
                           </span>
                         </td>
-                        <td style={{ fontSize: "0.8rem", color: "var(--color-muted)" }}>
+                        <td style={{ fontSize: "16px", color: "var(--color-muted)" }}>
                           {new Date(c.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "numeric" })}
                         </td>
-                        <td style={{ fontSize: "0.8rem", color: "var(--color-muted)" }}>
+                        <td style={{ fontSize: "16px", color: "var(--color-muted)" }}>
                           {new Date(c.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                         </td>
                       </tr>
@@ -161,6 +161,7 @@ export default function AdminBusinessCodesPage() {
                   })}
                 </tbody>
               </table>
+</div>
             </div>
           )}
         </div>

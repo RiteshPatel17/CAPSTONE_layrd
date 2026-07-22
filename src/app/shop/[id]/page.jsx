@@ -69,7 +69,7 @@ export default function ProductDetailPage() {
     <div className="section">
       <div className="container">
         {/* Breadcrumb */}
-        <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "40px", fontSize: "0.8rem", color: "var(--color-muted)" }}>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "40px", fontSize: "16px", color: "var(--color-muted)" }}>
           <Link href="/" style={{ color: "var(--color-muted)" }}>Home</Link>
           <span>/</span>
           <Link href="/shop" style={{ color: "var(--color-muted)" }}>Shop</Link>
@@ -77,7 +77,7 @@ export default function ProductDetailPage() {
           <span style={{ color: "var(--color-sand)" }}>{flavour?.name || product.name}</span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "64px", alignItems: "start" }}>
+        <div className="responsive-grid-2" style={{ gap: "64px", alignItems: "start" }}>
           {/* Image area */}
           <div
             style={{
@@ -90,7 +90,7 @@ export default function ProductDetailPage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "5rem",
+              fontSize: "48px",
               position: "sticky",
               top: "calc(var(--nav-height) + 24px)",
             }}
@@ -110,9 +110,8 @@ export default function ProductDetailPage() {
             {/* Name */}
             <h1
               style={{
-                fontFamily: "'Cormorant Garamond', serif",
-                fontSize: "clamp(2rem, 4vw, 3rem)",
-                lineHeight: 1.1,
+                fontSize: "48px", /* Simplified from redundant clamp */
+                lineHeight: "100%",
                 marginBottom: "8px",
               }}
             >
@@ -120,14 +119,14 @@ export default function ProductDetailPage() {
             </h1>
 
             {product.size && (
-              <p style={{ fontSize: "0.8rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-sand)", marginBottom: "16px" }}>
+              <p style={{ fontSize: "16px", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-sand)", marginBottom: "16px" }}>
                 {product.size}ml · Handcrafted
               </p>
             )}
 
             {/* Price */}
             <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
-              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2.2rem", color: "var(--price-color)", fontWeight: 600 }}>
+              <span style={{ fontSize: "48px", color: "var(--price-color)", fontWeight: 600 }}>
                 {formatPrice(product.price)}
               </span>
               <span className={`badge ${isAvailable ? "badge-green" : "badge-red"}`}>
@@ -139,7 +138,7 @@ export default function ProductDetailPage() {
 
             {/* Description */}
             {flavour?.description && (
-              <p style={{ fontSize: "0.95rem", lineHeight: 1.8, marginBottom: "28px" }}>
+              <p style={{ fontSize: "20px", lineHeight: "160%", marginBottom: "28px" }}>
                 {flavour.description}
               </p>
             )}
@@ -171,10 +170,10 @@ export default function ProductDetailPage() {
                   style={{
                     width: "36px", height: "36px", border: "1px solid var(--border)",
                     background: "none", color: "var(--color-cream)", cursor: "pointer",
-                    borderRadius: "2px", fontSize: "1.2rem",
+                    borderRadius: "2px", fontSize: "24px",
                   }}
                 >−</button>
-                <span style={{ fontSize: "1.1rem", color: "var(--color-cream)", minWidth: "32px", textAlign: "center" }}>
+                <span style={{ fontSize: "20px", color: "var(--color-cream)", minWidth: "32px", textAlign: "center" }}>
                   {quantity}
                 </span>
                 <button
@@ -182,7 +181,7 @@ export default function ProductDetailPage() {
                   style={{
                     width: "36px", height: "36px", border: "1px solid var(--border)",
                     background: "none", color: "var(--color-cream)", cursor: "pointer",
-                    borderRadius: "2px", fontSize: "1.2rem",
+                    borderRadius: "2px", fontSize: "24px",
                   }}
                 >+</button>
               </div>
@@ -203,10 +202,10 @@ export default function ProductDetailPage() {
             {/* Ingredients */}
             {flavour?.ingredients && (
               <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "4px", padding: "20px", marginBottom: "20px" }}>
-                <h5 style={{ fontFamily: "Inter, sans-serif", fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "8px" }}>
+                <h5 style={{ fontSize: "14px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "8px" }}>
                   Ingredients
                 </h5>
-                <p style={{ fontSize: "0.85rem", color: "var(--color-sand)", lineHeight: 1.6 }}>
+                <p style={{ fontSize: "16px", color: "var(--color-sand)", lineHeight: "160%" }}>
                   {flavour.ingredients}
                 </p>
               </div>
@@ -215,7 +214,7 @@ export default function ProductDetailPage() {
             {/* Allergens */}
             {flavour?.allergens?.length > 0 && (
               <div style={{ marginBottom: "20px" }}>
-                <h5 style={{ fontFamily: "Inter, sans-serif", fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "10px" }}>
+                <h5 style={{ fontSize: "14px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "8px" }}>
                   Contains
                 </h5>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -230,11 +229,11 @@ export default function ProductDetailPage() {
 
             {/* Storage info */}
             <div style={{ borderTop: "1px solid var(--border)", paddingTop: "20px" }}>
-              <h5 style={{ fontFamily: "Inter, sans-serif", fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "12px" }}>
+              <h5 style={{ fontSize: "14px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "12px" }}>
                 Storage & Freshness
               </h5>
               {STORAGE_INFO.map((info, i) => (
-                <p key={i} style={{ fontSize: "0.825rem", color: "var(--color-sand)", marginBottom: "6px" }}>
+                <p key={i} style={{ fontSize: "16px", color: "var(--color-sand)", marginBottom: "6px" }}>
                   ✦ {info}
                 </p>
               ))}

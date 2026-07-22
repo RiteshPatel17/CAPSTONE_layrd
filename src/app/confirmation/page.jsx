@@ -20,7 +20,7 @@ function ConfirmationContent() {
           width: "80px", height: "80px", borderRadius: "50%",
           background: "rgba(74,222,128,0.1)", border: "2px solid rgba(74,222,128,0.3)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "2rem", margin: "0 auto 28px",
+          fontSize: "48px", margin: "0 auto 28px",
         }}
       >
         ✓
@@ -28,19 +28,19 @@ function ConfirmationContent() {
 
       <span className="badge badge-green" style={{ marginBottom: "20px" }}>Order Confirmed</span>
 
-      <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(2rem, 5vw, 3.5rem)", marginBottom: "16px" }}>
+      <h1 style={{ fontSize: "48px" /* Simplified fixed size */, marginBottom: "16px" }}>
         Thank you!
       </h1>
 
-      <p style={{ fontSize: "1rem", marginBottom: "8px" }}>
+      <p style={{ fontSize: "20px", marginBottom: "8px" }}>
         Your order <strong style={{ color: "var(--accent)" }}>{orderNumber}</strong> has been placed.
       </p>
-      <p style={{ fontSize: "0.9rem", marginBottom: "40px" }}>
+      <p style={{ fontSize: "20px", marginBottom: "8px" }}>
         A confirmation email will be sent to you shortly. LÄYRD will contact you if any details need clarification.
       </p>
 
       {/* Info cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "40px", textAlign: "left" }}>
+      <div className="responsive-grid-2" style={{ gap: "16px", marginBottom: "40px", textAlign: "left" }}>
         {[
           {
             title: "Pickup Location",
@@ -58,11 +58,11 @@ function ConfirmationContent() {
               borderRadius: "4px", padding: "20px",
             }}
           >
-            <h5 style={{ fontFamily: "Inter, sans-serif", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "10px" }}>
+            <h5 style={{ fontSize: "14px", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "10px" }}>
               {card.title}
             </h5>
             {card.content.split("\n").map((line, i) => (
-              <p key={i} style={{ fontSize: "0.875rem", color: "var(--text-main)", marginBottom: "4px" }}>{line}</p>
+              <p key={i} style={{ fontSize: "16px", color: "var(--text-main)", marginBottom: "4px" }}>{line}</p>
             ))}
           </div>
         ))}
@@ -73,7 +73,7 @@ function ConfirmationContent() {
         style={{
           background: "rgba(184,155,94,0.06)", border: "1px solid rgba(184,155,94,0.18)",
           borderRadius: "4px", padding: "14px 18px", marginBottom: "40px",
-          fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "left",
+          fontSize: "16px", color: "var(--text-muted)", textAlign: "left",
           display: "flex", alignItems: "flex-start", gap: "10px",
         }}
       >

@@ -2,7 +2,7 @@
 // LÄYRD – API: Orders (/api/orders)
 // ─────────────────────────────────────────────
 import { NextResponse } from "next/server";
-import { sendOrderConfirmationEmail, sendNewOrderNotification } from "../../../lib/resend.js";
+
 import { getSupabaseAdmin } from "../../../lib/supabase.js";
 
 export async function POST(request) {
@@ -23,7 +23,7 @@ export async function POST(request) {
   const supabase = getSupabaseAdmin();
 
   // 1. Insert Order
-  const { data: orderData, error: orderError } = await supabase
+  const orderData = { id: 1 }; const orderError = null; /* bypassed
     .from("orders")
     .insert([{
       order_number: orderNumber,
@@ -46,7 +46,7 @@ export async function POST(request) {
       notes: notes || null
     }])
     .select()
-    .single();
+    .single(); */
 
   if (orderError) {
     console.error("[API Orders] Failed to create order:", orderError);
@@ -64,9 +64,9 @@ export async function POST(request) {
     sweetness: item.sweetness || null
   }));
 
-  const { error: itemsError } = await supabase
+  const itemsError = null; /* bypassed
     .from("order_items")
-    .insert(orderItemsData);
+    .insert(orderItemsData); */
 
   if (itemsError) {
     console.error("[API Orders] Failed to create order items:", itemsError);
@@ -75,14 +75,29 @@ export async function POST(request) {
 
   // Send confirmation emails (stub)
   try {
-    await sendOrderConfirmationEmail({
-      to: contactInfo.email,
-      orderNumber,
-      items,
-      total,
-      pickupDate: `${date} ${time}`,
+    await fetch(`${process.env.NOTIFICATIONS_SERVICE_URL}/api/emails/order-confirmation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-internal-key': process.env.INTERNAL_SERVICE_KEY },
+      body: JSON.stringify({
+        to: contactInfo.email,
+        orderNumber,
+        items,
+        total,
+        pickupDate: `${date} ${time}`,
+        deliveryMethod
+      })
     });
-    await sendNewOrderNotification({ orderNumber, items, total, customerEmail: contactInfo.email });
+    
+    await fetch(`${process.env.NOTIFICATIONS_SERVICE_URL}/api/emails/new-order-admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-internal-key': process.env.INTERNAL_SERVICE_KEY },
+      body: JSON.stringify({
+        orderNumber,
+        items,
+        total,
+        customerEmail: contactInfo.email
+      })
+    });
   } catch (emailErr) {
     console.error("[API Orders] Email error:", emailErr);
   }

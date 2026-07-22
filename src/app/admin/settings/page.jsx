@@ -66,7 +66,7 @@ export default function AdminSettingsPage() {
         <div style={{
           background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)",
           color: "#4ade80", padding: "12px 16px", borderRadius: "4px",
-          fontSize: "0.85rem", marginBottom: "24px",
+          fontSize: "16px", marginBottom: "24px",
           display: "flex", alignItems: "center", gap: "8px",
           animation: "fadeIn 0.2s ease",
         }}>
@@ -78,7 +78,7 @@ export default function AdminSettingsPage() {
         <div style={{
           background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
           color: "#f87171", padding: "12px 16px", borderRadius: "4px",
-          fontSize: "0.85rem", marginBottom: "24px",
+          fontSize: "16px", marginBottom: "24px",
           display: "flex", alignItems: "center", gap: "8px",
           animation: "fadeIn 0.2s ease",
         }}>
@@ -104,14 +104,14 @@ export default function AdminSettingsPage() {
             borderRadius: "50%",
             animation: "spin 0.7s linear infinite",
           }} />
-          <span style={{ fontSize: "0.82rem" }}>Loading settings…</span>
+          <span style={{ fontSize: "16px" }}>Loading settings…</span>
         </div>
       ) : (
         <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "24px", maxWidth: "680px" }}>
 
           {/* ── Store Contact ── */}
           <SettingSection title="Store Contact">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+            <div className="responsive-grid-2" style={{ gap: "16px" }}>
               <AdminFormField label="Store Email">
                 <input className="input" type="email"
                   value={settings.storeEmail}
@@ -159,7 +159,7 @@ export default function AdminSettingsPage() {
                   style={{ width: "120px" }}
                   onChange={(e) => handleField("gstRate", Number(e.target.value))}
                 />
-                <span style={{ fontSize: "0.9rem", color: "var(--color-sand)" }}>
+                <span style={{ fontSize: "20px", color: "var(--color-sand)" }}>
                   %
                 </span>
               </div>
@@ -175,7 +175,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => handleField("deliveryEnabled", e.target.checked)}
                 style={{ width: "18px", height: "18px", accentColor: "var(--color-accent)" }}
               />
-              <span style={{ fontSize: "0.9rem", color: "var(--color-cream)" }}>
+              <span style={{ fontSize: "20px", color: "var(--color-cream)" }}>
                 Enable delivery option for customers
               </span>
             </label>
@@ -187,12 +187,12 @@ export default function AdminSettingsPage() {
                   {settings.deliveryTiers.map((tier, i) => (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                       <span style={{
-                        width: "80px", fontSize: "0.82rem", color: "var(--color-sand)", flexShrink: 0,
+                        width: "80px", fontSize: "16px", color: "var(--color-sand)", flexShrink: 0,
                       }}>
                         {tierLabels[i]}
                       </span>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ color: "var(--color-muted)", fontSize: "0.9rem" }}>$</span>
+                        <span style={{ color: "var(--color-muted)", fontSize: "20px" }}>$</span>
                         <input
                           className="input"
                           type="number" min="0" step="1"
@@ -204,7 +204,7 @@ export default function AdminSettingsPage() {
                     </div>
                   ))}
                 </div>
-                <p style={{ fontSize: "0.75rem", color: "var(--color-muted)", marginTop: "10px" }}>
+                <p style={{ fontSize: "14px", color: "var(--color-muted)", marginTop: "10px" }}>
                   Delivery minimum: 4 items. Calgary area only.
                 </p>
               </div>
@@ -238,7 +238,7 @@ function SettingSection({ title, children }) {
       display: "flex", flexDirection: "column", gap: "16px",
     }}>
       <h5 style={{
-        fontFamily: "Inter, sans-serif", fontSize: "0.72rem",
+        fontSize: "14px",
         letterSpacing: "0.14em", textTransform: "uppercase",
         color: "var(--color-sand)", margin: 0,
       }}>

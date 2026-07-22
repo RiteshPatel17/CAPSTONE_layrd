@@ -53,18 +53,18 @@ export default function ResetPasswordPage() {
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: "36px" }}>
           <Link href="/">
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2rem", fontWeight: 700, letterSpacing: "0.25em", color: "var(--color-cream)" }}>
+            <span style={{ fontSize: "48px", fontWeight: 700, letterSpacing: "0.25em", color: "var(--color-cream)" }}>
               {BRAND.name}
             </span>
           </Link>
-          <p style={{ fontSize: "0.78rem", color: "var(--color-sand)", marginTop: "6px", letterSpacing: "0.1em" }}>
+          <p style={{ fontSize: "16px", color: "var(--color-sand)", marginTop: "6px", letterSpacing: "0.1em" }}>
             Reset your password
           </p>
         </div>
 
         {success ? (
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: "0.9rem", color: "var(--color-cream)", marginBottom: "20px" }}>
+            <p style={{ fontSize: "20px", color: "var(--color-cream)", marginBottom: "20px" }}>
               A password reset link has been sent to your email address. Please check your inbox.
             </p>
             <Link href="/login">
@@ -82,7 +82,7 @@ export default function ResetPasswordPage() {
             </div>
 
             {error && (
-              <p style={{ fontSize: "0.82rem", color: "#f87171", background: "rgba(239,68,68,0.08)", padding: "10px 14px", borderRadius: "3px", border: "1px solid rgba(239,68,68,0.15)" }}>
+              <p style={{ fontSize: "16px", color: "#f87171", background: "rgba(239,68,68,0.08)", padding: "10px 14px", borderRadius: "3px", border: "1px solid rgba(239,68,68,0.15)" }}>
                 {error}
               </p>
             )}
@@ -95,7 +95,7 @@ export default function ResetPasswordPage() {
 
         <div className="divider" style={{ marginTop: "36px" }} />
 
-        <p style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--color-sand)" }}>
+        <p style={{ textAlign: "center", fontSize: "16px", color: "var(--color-sand)" }}>
           Remember your password?{" "}
           <Link href="/login" style={{ color: "var(--color-accent)" }}>Sign In</Link>
         </p>

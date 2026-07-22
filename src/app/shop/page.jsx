@@ -53,22 +53,23 @@ export default function ShopPage() {
       <div className="container">
         {/* Header */}
         <div style={{ marginBottom: "48px" }}>
-          <p style={{ fontSize: "0.72rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--color-accent)", marginBottom: "10px" }}>
+          <p style={{ fontSize: "14px", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--color-accent)", marginBottom: "10px" }}>
             LÄYRD Collection
           </p>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", marginBottom: "8px" }}>
+          <h1 style={{ marginBottom: "8px" }}>
             The Shop
           </h1>
           <div className="divider-accent" />
         </div>
 
         {/* Filter tabs */}
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "40px" }}>
+        <div className="hide-scrollbar flex-wrap" style={{ display: "flex", gap: "10px", marginBottom: "40px", paddingBottom: "4px" }}>
           {FILTERS.map((filter) => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
               className={`tag ${activeFilter === filter ? "active" : ""}`}
+              style={{ flexShrink: 0 }}
             >
               {filter}
             </button>
@@ -78,16 +79,11 @@ export default function ShopPage() {
         {/* Cans grid */}
         {filteredProducts.length > 0 && (
           <>
-            <h3
-              style={{
-                fontFamily: "'Cormorant Garamond', serif",
-                fontSize: "1.5rem",
-                marginBottom: "24px",
-                color: "var(--color-cream)",
-              }}
-            >
-              {activeFilter === "All" ? "Cake in a Can · 250ml" : activeFilter}
-            </h3>
+            <div className="shop-section-header">
+              <h2 className="shop-section-heading">
+                {activeFilter === "All" ? "Cake in a Can · 250ml" : activeFilter}
+              </h2>
+            </div>
             <div className="product-grid" style={{ marginBottom: "64px" }}>
               {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
@@ -99,13 +95,15 @@ export default function ShopPage() {
         {/* Bundles */}
         {showBundles && (
           <>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.5rem", marginBottom: "8px" }}>
-              Bundles
-            </h3>
-            <p style={{ fontSize: "0.875rem", color: "var(--color-sand)", marginBottom: "24px" }}>
-              Mix and match any flavours. Add $1 per limited flavour included.
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "24px", marginBottom: "64px" }}>
+            <div className="shop-section-header">
+              <h2 className="shop-section-heading">
+                Bundles
+              </h2>
+              <p className="shop-section-desc">
+                Mix and match any flavours. Add $1 per limited flavour included.
+              </p>
+            </div>
+            <div className="product-grid" style={{ marginBottom: "64px" }}>
               {BUNDLE_PRODUCTS.map((bundle) => (
                 <BundleCard key={bundle.id} bundle={bundle} />
               ))}
@@ -116,13 +114,15 @@ export default function ShopPage() {
         {/* Espresso */}
         {showEspresso && (
           <>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.5rem", marginBottom: "8px" }}>
-              Espresso Shots
-            </h3>
-            <p style={{ fontSize: "0.875rem", color: "var(--color-sand)", marginBottom: "24px" }}>
-              Counts toward your 4-item delivery minimum. Choose your sweetness preference.
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "20px", marginBottom: "40px" }}>
+            <div className="shop-section-header">
+              <h2 className="shop-section-heading">
+                Espresso Shots
+              </h2>
+              <p className="shop-section-desc">
+                Counts toward your 4-item delivery minimum. Choose your sweetness preference.
+              </p>
+            </div>
+            <div className="product-grid" style={{ marginBottom: "40px" }}>
               {ESPRESSO_PRODUCTS.map((product) => (
                 <EspressoCard key={product.id} product={product} />
               ))}
@@ -136,38 +136,49 @@ export default function ShopPage() {
 
 function BundleCard({ bundle }) {
   return (
-    <div className="card" style={{ padding: "28px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-        <div>
-          <span className="badge badge-gold" style={{ marginBottom: "10px" }}>
-            {bundle.canCount} Cans
-          </span>
-          <h4
-            style={{
-              fontFamily: "'Cormorant Garamond', serif",
-              fontSize: "1.3rem",
-              color: "var(--color-cream)",
-              marginTop: "8px",
-            }}
-          >
-            {bundle.name}
-          </h4>
+    <div className="card product-card-container">
+      {/* ── Product image ─────────────────────────────────── */}
+      <Link href={`/shop/bundle/${bundle.canCount}`} style={{ display: "block" }}>
+        <div className="product-card-media">
+          <div className="product-card-neutral">
+            <span style={{ fontSize: "24px", letterSpacing: "0.2em", fontWeight: 700, color: "var(--accent)" }}>
+              LÄYRD
+            </span>
+          </div>
+
+          {/* Category badge — top left */}
+          <div style={{ position: "absolute", top: "12px", left: "12px" }}>
+            <span className="badge badge-gold">
+              {bundle.canCount} Cans
+            </span>
+          </div>
         </div>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.8rem", color: "var(--color-accent)" }}>
-          {formatPrice(bundle.basePrice)}
+      </Link>
+
+      {/* ── Product info ──────────────────────────────────── */}
+      <div className="product-card-body">
+        <Link href={`/shop/bundle/${bundle.canCount}`} style={{ textDecoration: "none", display: "flex", flexDirection: "column", flex: 1 }}>
+          <p className="product-card-eyebrow">
+            Bundle
+          </p>
+          <h3 className="product-card-title">
+            {bundle.name}
+          </h3>
+          <div className="product-card-desc">
+            <p style={{ marginBottom: "8px" }}>{bundle.description}</p>
+            <p style={{ fontSize: "13px", opacity: 0.8 }}>+$1 per limited flavour included</p>
+          </div>
+        </Link>
+
+        <div className="bundle-card-footer">
+          <span className="bundle-card-price">
+            {formatPrice(bundle.basePrice)}
+          </span>
+          <Link href={`/shop/bundle/${bundle.canCount}`} className="btn btn-primary btn-sm bundle-card-action" style={{ fontSize: "14px", padding: "8px 16px" }}>
+            Customize
+          </Link>
         </div>
       </div>
-      <p style={{ fontSize: "0.85rem", color: "var(--color-sand)", marginBottom: "20px", lineHeight: 1.6 }}>
-        {bundle.description}
-      </p>
-      <p style={{ fontSize: "0.78rem", color: "var(--color-muted)", marginBottom: "20px" }}>
-        +$1 per limited flavour included
-      </p>
-      <a href={`/shop/bundle/${bundle.canCount}`}>
-        <button className="btn btn-outline" style={{ width: "100%" }}>
-          Customize Bundle
-        </button>
-      </a>
     </div>
   );
 }
@@ -209,92 +220,70 @@ function EspressoCard({ product }) {
   }
 
   return (
-    <Link href={`/shop/${product.id}`} style={{ textDecoration: "none" }}>
-      <div className="card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-        {/* Product Image */}
-        <div
-        style={{
-          height: "180px",
-          position: "relative",
-          overflow: "hidden",
-          background: "var(--bg-soft)",
-        }}
-      >
-        <img
-          src="/images/products/espresso.png"
-          alt={product.name}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center",
-            display: "block",
-            transition: "transform 0.4s ease",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.04)")}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-        />
-      </div>
+    <div className="card product-card-container">
+      {/* ── Product image ─────────────────────────────────── */}
+      <Link href={`/shop/${product.id}`} style={{ display: "block" }}>
+        <div className="product-card-media">
+          <img src="/images/products/espresso.png" alt={product.name} />
+        </div>
+      </Link>
 
-      <div style={{ padding: "24px", flex: 1, display: "flex", flexDirection: "column" }}>
-        <h4
-          style={{
-            fontFamily: "'Cormorant Garamond', serif",
-            fontSize: "1.2rem",
-            color: "var(--color-cream)",
-            marginBottom: "4px",
-          }}
-        >
-          {product.name}
-        </h4>
-        <p style={{ fontSize: "1.4rem", fontFamily: "'Cormorant Garamond', serif", color: "var(--color-accent)", marginBottom: "16px" }}>
-          {formatPrice(product.price)}
-        </p>
+      {/* ── Product info ──────────────────────────────────── */}
+      <div className="product-card-body">
+        <Link href={`/shop/${product.id}`} style={{ textDecoration: "none", display: "flex", flexDirection: "column" }}>
+          <p className="product-card-eyebrow">
+            Espresso
+          </p>
+          <h3 className="product-card-title">
+            {product.name}
+          </h3>
+        </Link>
 
         {/* Sweetness selector */}
-        <div style={{ marginBottom: "16px", flex: 1 }}>
-        <label className="label">Sweetness</label>
-        <select
-          value={sweetness}
-          onClick={(e) => e.preventDefault()}
-          onChange={(e) => {
-            e.preventDefault();
-            setSweetness(e.target.value);
-          }}
-          className="input"
-          style={{ marginTop: "6px" }}
-        >
-          {product.sweetness.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
+        <div style={{ marginBottom: "16px", marginTop: "12px" }}>
+          <label className="label" style={{ fontSize: "12px", marginBottom: "4px" }}>Sweetness</label>
+          <select
+            value={sweetness}
+            onChange={(e) => setSweetness(e.target.value)}
+            className="input"
+            style={{ padding: "8px 12px", fontSize: "16px" }}
+          >
+            {product.sweetness.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
         </div>
 
-        {cartItem ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "auto" }}>
-            <button
-              onClick={handleDecrement}
-              style={{ width: "32px", height: "32px", borderRadius: "50%", border: "1px solid var(--border-soft)", background: "var(--bg-main)", color: "var(--text-main)", cursor: "pointer", fontSize: "1.2rem", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              −
+        <div className="product-card-footer">
+          <span className="product-card-price">
+            {formatPrice(product.price)}
+          </span>
+
+          {cartItem ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <button
+                onClick={handleDecrement}
+                style={{ width: "32px", height: "32px", borderRadius: "50%", border: "1px solid var(--border-soft)", background: "var(--bg-main)", color: "var(--text-main)", cursor: "pointer", fontSize: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                −
+              </button>
+              <span style={{ fontSize: "24px", fontWeight: 600, color: "var(--text-main)", minWidth: "20px", textAlign: "center" }}>
+                {cartItem.quantity}
+              </span>
+              <button
+                onClick={handleIncrement}
+                style={{ width: "32px", height: "32px", borderRadius: "50%", border: "1px solid var(--border-soft)", background: "var(--bg-main)", color: "var(--text-main)", cursor: "pointer", fontSize: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                +
+              </button>
+            </div>
+          ) : (
+            <button onClick={handleAdd} className="btn btn-primary btn-sm" style={{ fontSize: "14px", padding: "8px 16px" }}>
+              Add to Cart
             </button>
-            <span style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-main)", minWidth: "20px", textAlign: "center", flex: 1 }}>
-              {cartItem.quantity}
-            </span>
-            <button
-              onClick={handleIncrement}
-              style={{ width: "32px", height: "32px", borderRadius: "50%", border: "1px solid var(--border-soft)", background: "var(--bg-main)", color: "var(--text-main)", cursor: "pointer", fontSize: "1.2rem", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              +
-            </button>
-          </div>
-        ) : (
-          <button onClick={handleAdd} className="btn btn-primary" style={{ width: "100%", marginTop: "auto" }}>
-            Add to Cart
-          </button>
-        )}
+          )}
+        </div>
       </div>
     </div>
-    </Link>
   );
 }

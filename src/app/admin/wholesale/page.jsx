@@ -55,7 +55,8 @@ export default function AdminWholesalePage() {
         />
       ) : (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "6px", overflow: "auto" }}>
-          <table className="table">
+          <div className="table-responsive">
+<table className="table">
             <thead>
               <tr>
                 <th>Date</th>
@@ -69,32 +70,32 @@ export default function AdminWholesalePage() {
             <tbody>
               {applications.map((app) => (
                 <tr key={app.id}>
-                  <td style={{ fontSize: "0.8rem", color: "var(--color-muted)" }}>
+                  <td style={{ fontSize: "16px", color: "var(--color-muted)" }}>
                     {new Date(app.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </td>
                   <td style={{ fontWeight: 600 }}>{app.business_name}</td>
                   <td>
-                    <div style={{ fontSize: "0.85rem", color: "var(--color-sand)" }}>{app.contact_name}</div>
-                    <div style={{ fontSize: "0.8rem", color: "var(--color-muted)" }}>
+                    <div style={{ fontSize: "16px", color: "var(--color-sand)" }}>{app.contact_name}</div>
+                    <div style={{ fontSize: "16px", color: "var(--color-muted)" }}>
                       {app.email} <br /> {app.phone}
                     </div>
                   </td>
                   <td style={{ maxWidth: "250px" }}>
-                    <div style={{ fontSize: "0.8rem", color: "var(--color-sand)" }}>
+                    <div style={{ fontSize: "16px", color: "var(--color-sand)" }}>
                       <strong>Address:</strong> {app.address}
                     </div>
                     {app.instagram && (
-                      <div style={{ fontSize: "0.8rem", color: "var(--color-sand)" }}>
+                      <div style={{ fontSize: "16px", color: "var(--color-sand)" }}>
                         <strong>IG:</strong> {app.instagram}
                       </div>
                     )}
                     {app.notes && (
-                      <div style={{ fontSize: "0.75rem", color: "var(--color-muted)", marginTop: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <div style={{ fontSize: "14px", color: "var(--color-muted)", marginTop: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {app.notes}
                       </div>
                     )}
                     {app.permit_url && (
-                      <a href={app.permit_url} target="_blank" rel="noreferrer" style={{ fontSize: "0.75rem", color: "var(--color-accent)", textDecoration: "underline", display: "inline-block", marginTop: "4px" }}>
+                      <a href={app.permit_url} target="_blank" rel="noreferrer" style={{ fontSize: "14px", color: "var(--color-accent)", textDecoration: "underline", display: "inline-block", marginTop: "4px" }}>
                         View Permit 📎
                       </a>
                     )}
@@ -107,27 +108,28 @@ export default function AdminWholesalePage() {
                       <div style={{ display: "flex", gap: "8px" }}>
                         <button 
                           className="btn btn-primary" 
-                          style={{ padding: "4px 8px", fontSize: "0.7rem", minWidth: "auto" }}
+                          style={{ padding: "4px 8px", fontSize: "14px", minWidth: "auto" }}
                           onClick={() => updateStatus(app.id, "Approved")}
                         >
                           Approve
                         </button>
                         <button 
                           className="btn btn-outline" 
-                          style={{ padding: "4px 8px", fontSize: "0.7rem", minWidth: "auto" }}
+                          style={{ padding: "4px 8px", fontSize: "14px", minWidth: "auto" }}
                           onClick={() => updateStatus(app.id, "Rejected")}
                         >
                           Reject
                         </button>
                       </div>
                     ) : (
-                      <span style={{ fontSize: "0.75rem", color: "var(--color-muted)" }}>Reviewed</span>
+                      <span style={{ fontSize: "14px", color: "var(--color-muted)" }}>Reviewed</span>
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+</div>
         </div>
       )}
     </AdminLayout>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { supabase } from "../../../lib/supabase.js";
+import { getSupabaseAdmin } from "../../../lib/supabase.js";
 import { verifyStripeWebhook } from "../../../lib/stripe.js";
-import { sendOrderConfirmationEmail, sendNewOrderNotification } from "../../../lib/resend.js";
+
 
 // Stripe requires the raw body to construct the event
 export const config = {
@@ -29,11 +29,24 @@ export async function POST(request) {
       const orderId = session.metadata?.orderId;
 
       if (orderId) {
+        // Fetch order details first to check idempotency
+        const supabaseAdmin = getSupabaseAdmin();
+        const { data: existingOrder } = await supabaseAdmin
+          .from("orders")
+          .select("payment_status")
+          .eq("id", orderId)
+          .single();
+
+        if (existingOrder && existingOrder.payment_status === "Paid") {
+          console.log(`[Stripe Webhook] Order ${orderId} is already paid. Ignoring duplicate webhook.`);
+          return NextResponse.json({ received: true });
+        }
+
         // Mark the order as Paid
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
           .from("orders")
           .update({
-            payment_status: "paid",
+            payment_status: "Paid",
             status: "Paid",
           })
           .eq("id", orderId);
@@ -44,33 +57,69 @@ export async function POST(request) {
         }
 
         // Fetch order details for emails
-        const { data: orderData } = await supabase
+        const { data: orderData } = await supabaseAdmin
           .from("orders")
           .select("*")
           .eq("id", orderId)
           .single();
 
-        const { data: orderItems } = await supabase
+        const { data: orderItems } = await supabaseAdmin
           .from("order_items")
           .select("*")
           .eq("order_id", orderId);
 
         if (orderData && orderItems) {
-          await sendOrderConfirmationEmail({
-            to: orderData.customer_email,
-            orderNumber: orderData.order_number,
-            items: orderItems,
-            total: orderData.total,
-            pickupDate: orderData.pickup_date,
-            deliveryMethod: orderData.delivery_method
-          });
+          if (orderData.promo_code) {
+             try {
+               const res = await fetch(`${process.env.PROMO_SERVICE_URL}/api/promo/increment`, {
+                 method: 'POST',
+                 headers: {
+                   'Content-Type': 'application/json',
+                   'x-internal-key': process.env.INTERNAL_SERVICE_KEY
+                 },
+                 body: JSON.stringify({ code: orderData.promo_code })
+               });
+               if (!res.ok) {
+                 console.error("[Stripe Webhook] Fetch failed with status:", res.status, await res.text());
+               } else {
+                 console.log("[Stripe Webhook] Successfully incremented promo usage.");
+               }
+             } catch (err) {
+               console.error("[Stripe Webhook] Failed to increment promo usage:", err);
+             }
+          }
 
-          await sendNewOrderNotification({
-            orderNumber: orderData.order_number,
-            items: orderItems,
-            total: orderData.total,
-            customerEmail: orderData.customer_email
-          });
+          // Send Order Confirmation via Microservice
+          fetch(`${process.env.NOTIFICATIONS_SERVICE_URL}/api/emails/order-confirmation`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-internal-key': process.env.INTERNAL_SERVICE_KEY
+            },
+            body: JSON.stringify({
+              to: orderData.customer_email,
+              orderNumber: orderData.id,
+              items: orderItems,
+              total: orderData.total,
+              pickupDate: orderData.pickup_date,
+              deliveryMethod: orderData.fulfillment
+            })
+          }).catch(err => console.error("[Webhook] Failed to call notifications-service (confirmation):", err));
+
+          // Send Admin Notification via Microservice
+          fetch(`${process.env.NOTIFICATIONS_SERVICE_URL}/api/emails/new-order-admin`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-internal-key': process.env.INTERNAL_SERVICE_KEY
+            },
+            body: JSON.stringify({
+              orderNumber: orderData.id,
+              items: orderItems,
+              total: orderData.total,
+              customerEmail: orderData.customer_email
+            })
+          }).catch(err => console.error("[Webhook] Failed to call notifications-service (admin):", err));
         }
       }
     }

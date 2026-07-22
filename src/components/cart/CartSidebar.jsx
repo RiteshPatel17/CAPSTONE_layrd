@@ -67,7 +67,7 @@ export default function CartSidebar() {
             borderBottom: "1px solid var(--border-soft)",
           }}
         >
-          <h4 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.4rem", color: "var(--text-main)" }}>
+          <h4 style={{ fontSize: "24px", color: "var(--text-main)" }}>
             Your Cart {totalItems > 0 && <span style={{ color: "var(--accent)" }}>({totalItems})</span>}
           </h4>
           <button
@@ -77,8 +77,8 @@ export default function CartSidebar() {
               border: "none",
               cursor: "pointer",
               color: "var(--text-muted)",
-              fontSize: "1.4rem",
-              lineHeight: 1,
+              fontSize: "24px",
+              lineHeight: "100%",
             }}
             aria-label="Close cart"
           >
@@ -92,7 +92,7 @@ export default function CartSidebar() {
             <div style={{ textAlign: "center", paddingTop: "60px" }}>
               {/* Empty cart icon — professional minimal bag */}
               <ShoppingBag size={40} strokeWidth={1} style={{ color: "var(--border-soft)", margin: "0 auto 16px" }} />
-              <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+              <p style={{ color: "var(--text-muted)", fontSize: "20px" }}>
                 Your cart is empty.
               </p>
               <Link href="/shop" onClick={closeCart}>
@@ -130,8 +130,8 @@ export default function CartSidebar() {
             <div style={{ marginBottom: "10px" }}>
               {promoCode ? (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg-soft)", padding: "8px 12px", borderRadius: "4px" }}>
-                  <span style={{ fontSize: "0.85rem", color: "var(--accent)", fontWeight: 500 }}>Code: {promoCode.code} applied!</span>
-                  <button onClick={removePromo} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "0.85rem" }}>Remove</button>
+                  <span style={{ fontSize: "16px", color: "var(--accent)", fontWeight: 500 }}>Code: {promoCode.code} applied!</span>
+                  <button onClick={removePromo} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "16px" }}>Remove</button>
                 </div>
               ) : (
                 <div>
@@ -141,17 +141,17 @@ export default function CartSidebar() {
                       placeholder="Promo code" 
                       value={promoInput} 
                       onChange={(e) => setPromoInput(e.target.value)} 
-                      style={{ flex: 1, padding: "8px 12px", border: "1px solid var(--border-soft)", borderRadius: "4px", background: "var(--bg-main)", color: "var(--text-main)", fontSize: "0.85rem" }} 
+                      style={{ flex: 1, padding: "8px 12px", border: "1px solid var(--border-soft)", borderRadius: "4px", background: "var(--bg-main)", color: "var(--text-main)", fontSize: "16px" }} 
                     />
                     <button 
                       onClick={handleApplyPromo} 
                       disabled={promoLoading} 
-                      style={{ padding: "8px 16px", background: "var(--text-main)", color: "var(--bg-main)", border: "none", borderRadius: "4px", cursor: promoLoading ? "not-allowed" : "pointer", fontSize: "0.85rem" }}
+                      style={{ padding: "8px 16px", background: "var(--text-main)", color: "var(--bg-main)", border: "none", borderRadius: "4px", cursor: promoLoading ? "not-allowed" : "pointer", fontSize: "16px" }}
                     >
                       {promoLoading ? "..." : "Apply"}
                     </button>
                   </div>
-                  {promoError && <p style={{ color: "red", fontSize: "0.75rem", marginTop: "4px" }}>{promoError}</p>}
+                  {promoError && <p style={{ color: "red", fontSize: "14px", marginTop: "4px" }}>{promoError}</p>}
                 </div>
               )}
             </div>
@@ -180,7 +180,7 @@ export default function CartSidebar() {
                 Checkout
               </button>
             </Link>
-            <Link href="/cart" onClick={closeCart} style={{ textAlign: "center", fontSize: "0.8rem", color: "var(--text-muted)" }}>
+            <Link href="/cart" onClick={closeCart} style={{ textAlign: "center", fontSize: "16px", color: "var(--text-muted)" }}>
               <button className="btn btn-outline" style={{ width: "100%", padding: "10px", marginTop: "12px" }}>
                 View Full Cart
               </button>
@@ -231,7 +231,7 @@ function CartItem({ item, onRemove, onUpdateQuantity }) {
         <p
           style={{
             color: "var(--text-main)",
-            fontSize: "0.875rem",
+            fontSize: "16px",
             fontWeight: 500,
             marginBottom: "2px",
             whiteSpace: "nowrap",
@@ -242,11 +242,11 @@ function CartItem({ item, onRemove, onUpdateQuantity }) {
           {item.name}
         </p>
         {item.sweetness && (
-          <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "4px" }}>
+          <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "4px" }}>
             {item.sweetness}
           </p>
         )}
-        <p style={{ color: "var(--accent)", fontSize: "0.875rem", fontWeight: 600 }}>
+        <p style={{ color: "var(--accent)", fontSize: "16px", fontWeight: 600 }}>
           {formatPrice(item.price)}
         </p>
 
@@ -257,13 +257,13 @@ function CartItem({ item, onRemove, onUpdateQuantity }) {
             style={{
               width: "26px", height: "26px", borderRadius: "50%",
               border: "1px solid var(--border-soft)", background: "none",
-              color: "var(--text-main)", cursor: "pointer", fontSize: "1rem",
+              color: "var(--text-main)", cursor: "pointer", fontSize: "20px",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
             −
           </button>
-          <span style={{ fontSize: "0.875rem", color: "var(--text-main)", minWidth: "20px", textAlign: "center" }}>
+          <span style={{ fontSize: "16px", color: "var(--text-main)", minWidth: "20px", textAlign: "center" }}>
             {item.quantity}
           </span>
           <button
@@ -271,7 +271,7 @@ function CartItem({ item, onRemove, onUpdateQuantity }) {
             style={{
               width: "26px", height: "26px", borderRadius: "50%",
               border: "1px solid var(--border-soft)", background: "none",
-              color: "var(--text-main)", cursor: "pointer", fontSize: "1rem",
+              color: "var(--text-main)", cursor: "pointer", fontSize: "20px",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
@@ -285,7 +285,7 @@ function CartItem({ item, onRemove, onUpdateQuantity }) {
         onClick={onRemove}
         style={{
           background: "none", border: "none", cursor: "pointer",
-          color: "var(--text-muted)", fontSize: "1.1rem", lineHeight: 1,
+          color: "var(--text-muted)", fontSize: "20px", lineHeight: "100%",
           flexShrink: 0,
         }}
         aria-label="Remove item"
@@ -299,7 +299,7 @@ function CartItem({ item, onRemove, onUpdateQuantity }) {
 function TotalRow({ label, value, bold, accent }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{label}</span>
+      <span style={{ fontSize: "16px", color: "var(--text-muted)" }}>{label}</span>
       <span
         style={{
           fontSize: bold ? "1rem" : "0.85rem",

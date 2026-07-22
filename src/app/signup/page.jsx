@@ -38,15 +38,15 @@ export default function SignupPage() {
     <div style={{ minHeight: "calc(100vh - 72px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px" }}>
       <div style={{ width: "100%", maxWidth: "440px", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "4px", padding: "48px 40px" }}>
         <div style={{ textAlign: "center", marginBottom: "36px" }}>
-          <Link href="/"><span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2rem", fontWeight: 700, letterSpacing: "0.25em", color: "var(--color-cream)" }}>{BRAND.name}</span></Link>
-          <p style={{ fontSize: "0.78rem", color: "var(--color-sand)", marginTop: "6px", letterSpacing: "0.1em" }}>Create your account</p>
+          <Link href="/"><span style={{ fontSize: "48px", fontWeight: 700, letterSpacing: "0.25em", color: "var(--color-cream)" }}>{BRAND.name}</span></Link>
+          <p style={{ fontSize: "16px", color: "var(--color-sand)", marginTop: "6px", letterSpacing: "0.1em" }}>Create your account</p>
         </div>
 
         {done ? (
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "2.5rem", marginBottom: "16px" }}>✉</div>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", marginBottom: "12px" }}>Check your email</h3>
-            <p style={{ fontSize: "0.9rem", color: "var(--color-sand)" }}>We've sent a confirmation link to <strong style={{ color: "var(--color-cream)" }}>{form.email}</strong></p>
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>✉</div>
+            <h3 style={{ marginBottom: "12px" }}>Check your email</h3>
+            <p style={{ fontSize: "20px", color: "var(--color-sand)" }}>We've sent a confirmation link to <strong style={{ color: "var(--color-cream)" }}>{form.email}</strong></p>
             <Link href="/login"><button className="btn btn-primary" style={{ marginTop: "28px" }}>Back to Login</button></Link>
           </div>
         ) : (
@@ -67,7 +67,7 @@ export default function SignupPage() {
               <label className="label">Confirm Password</label>
               <input className="input" type="password" required placeholder="••••••••" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
             </div>
-            {error && <p style={{ fontSize: "0.82rem", color: "#f87171" }}>{error}</p>}
+            {error && <p style={{ fontSize: "16px", color: "#f87171" }}>{error}</p>}
             <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: "100%" }}>
               {loading ? "Creating account..." : "Create Account"}
             </button>
@@ -77,7 +77,7 @@ export default function SignupPage() {
         {!done && (
           <>
             <div className="divider" />
-            <p style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--color-sand)" }}>
+            <p style={{ textAlign: "center", fontSize: "16px", color: "var(--color-sand)" }}>
               Already have an account?{" "}<Link href="/login" style={{ color: "var(--color-accent)" }}>Sign in</Link>
             </p>
           </>

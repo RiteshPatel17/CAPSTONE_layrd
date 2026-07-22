@@ -74,12 +74,12 @@ export default function AdminAvailabilityPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
         <AdminPageHeader title="Availability" subtitle="Control shop hours, pickup windows, and delivery days" />
         {toast === "saved" && (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#10b981", fontSize: "0.875rem", fontWeight: 500 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#10b981", fontSize: "16px", fontWeight: 500 }}>
             <Check size={16} /> Saved Successfully
           </div>
         )}
         {toast === "error" && (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ef4444", fontSize: "0.875rem", fontWeight: 500 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ef4444", fontSize: "16px", fontWeight: 500 }}>
             <X size={16} /> Failed to save
           </div>
         )}
@@ -97,10 +97,10 @@ export default function AdminAvailabilityPage() {
               style={{ width: "18px", height: "18px", accentColor: "var(--accent)" }} 
             />
             <div>
-              <div style={{ fontWeight: 600, color: "var(--text-main)", fontSize: "1rem" }}>
+              <div style={{ fontWeight: 600, color: "var(--text-main)", fontSize: "20px" }}>
                 {settings.isOpen ? "Shop is OPEN" : "Shop is CLOSED"}
               </div>
-              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              <div style={{ fontSize: "16px", color: "var(--text-muted)" }}>
                 {settings.isOpen 
                   ? "Customers can browse and place orders normally." 
                   : "Checkout is disabled. Customers will see a closed banner."}
@@ -111,7 +111,7 @@ export default function AdminAvailabilityPage() {
 
         {/* Pickup Days */}
         <div style={{ padding: "20px", background: "var(--surface)", border: "1px solid var(--border-soft)", borderRadius: "8px" }}>
-          <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text-main)", marginBottom: "12px" }}>Available Pickup Days</h3>
+          <h3 style={{ fontSize: "20px", fontWeight: 600, color: "var(--text-main)", marginBottom: "12px" }}>Available Pickup Days</h3>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
             {DAYS_OF_WEEK.map((day) => {
               const isActive = settings.pickupDays.includes(day);
@@ -126,7 +126,7 @@ export default function AdminAvailabilityPage() {
                     border: `1px solid ${isActive ? "var(--accent)" : "var(--border-soft)"}`,
                     background: isActive ? "rgba(201,169,110,0.1)" : "transparent",
                     color: isActive ? "var(--accent)" : "var(--text-muted)",
-                    fontSize: "0.85rem",
+                    fontSize: "16px",
                     cursor: "pointer",
                     transition: "all 0.2s"
                   }}
@@ -140,7 +140,7 @@ export default function AdminAvailabilityPage() {
 
         {/* Pickup Time Windows */}
         <div style={{ padding: "20px", background: "var(--surface)", border: "1px solid var(--border-soft)", borderRadius: "8px" }}>
-          <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text-main)", marginBottom: "12px" }}>Pickup Time Windows</h3>
+          <h3 style={{ fontSize: "20px", fontWeight: 600, color: "var(--text-main)", marginBottom: "12px" }}>Pickup Time Windows</h3>
           
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "16px" }}>
             {settings.pickupTimes.map((time) => (
@@ -148,7 +148,7 @@ export default function AdminAvailabilityPage() {
                 display: "flex", alignItems: "center", gap: "8px",
                 padding: "6px 12px", background: "var(--bg-main)",
                 border: "1px solid var(--border-soft)", borderRadius: "4px",
-                fontSize: "0.85rem", color: "var(--text-main)"
+                fontSize: "16px", color: "var(--text-main)"
               }}>
                 {time}
                 <button 
@@ -180,7 +180,7 @@ export default function AdminAvailabilityPage() {
 
         {/* Delivery Days */}
         <div style={{ padding: "20px", background: "var(--surface)", border: "1px solid var(--border-soft)", borderRadius: "8px" }}>
-          <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text-main)", marginBottom: "12px" }}>Available Delivery Days</h3>
+          <h3 style={{ fontSize: "20px", fontWeight: 600, color: "var(--text-main)", marginBottom: "12px" }}>Available Delivery Days</h3>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
             {DAYS_OF_WEEK.map((day) => {
               const isActive = settings.deliveryDays.includes(day);
@@ -195,7 +195,7 @@ export default function AdminAvailabilityPage() {
                     border: `1px solid ${isActive ? "var(--accent)" : "var(--border-soft)"}`,
                     background: isActive ? "rgba(201,169,110,0.1)" : "transparent",
                     color: isActive ? "var(--accent)" : "var(--text-muted)",
-                    fontSize: "0.85rem",
+                    fontSize: "16px",
                     cursor: "pointer",
                     transition: "all 0.2s"
                   }}

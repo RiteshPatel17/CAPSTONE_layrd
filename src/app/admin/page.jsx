@@ -21,7 +21,7 @@ function StatCard({ label, value, sub, warn }) {
       transition: "border-color 0.2s",
     }}>
       <p style={{
-        fontSize: "0.66rem",
+        fontSize: "14px",
         letterSpacing: "0.12em",
         textTransform: "uppercase",
         color: "var(--color-muted)",
@@ -30,17 +30,16 @@ function StatCard({ label, value, sub, warn }) {
         {label}
       </p>
       <p style={{
-        fontFamily: "'Cormorant Garamond', serif",
-        fontSize: "2.2rem",
+        fontSize: "14px",
         fontWeight: 600,
         color: warn ? "#f87171" : "var(--color-cream)",
-        lineHeight: 1,
+        lineHeight: "100%",
         margin: 0,
       }}>
         {value}
       </p>
       {sub && (
-        <p style={{ fontSize: "0.7rem", color: "var(--color-muted)", margin: "5px 0 0" }}>
+        <p style={{ fontSize: "14px", color: "var(--color-muted)", margin: "5px 0 0" }}>
           {sub}
         </p>
       )}
@@ -93,12 +92,7 @@ export default function AdminDashboard() {
     <AdminLayout title="Dashboard" subtitle="LÄYRD Admin Overview">
 
       {/* ── Stat cards ── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))",
-        gap: "14px",
-        marginBottom: "36px",
-      }}>
+      <div className="admin-card-grid-160" style={{ gap: "20px", marginBottom: "40px" }}>
         <StatCard label="Total Orders"     value={totalOrders}                sub="all time" />
         <StatCard label="Pending Payment"  value={pendingPayment}             sub="awaiting e-transfer" warn={pendingPayment > 0} />
         <StatCard label="Preparing"        value={preparing}                  sub="in progress" />
@@ -116,7 +110,7 @@ export default function AdminDashboard() {
           marginBottom: "10px",
         }}>
           <h3 style={{
-            fontSize: "0.68rem",
+            fontSize: "14px",
             fontWeight: 600,
             letterSpacing: "0.14em",
             textTransform: "uppercase",
@@ -127,7 +121,7 @@ export default function AdminDashboard() {
           </h3>
           <Link href="/admin/orders">
             <span style={{
-              fontSize: "0.75rem",
+              fontSize: "14px",
               color: "var(--color-accent)",
               cursor: "pointer",
             }}>
@@ -142,7 +136,8 @@ export default function AdminDashboard() {
           borderRadius: "6px",
           overflow: "auto",
         }}>
-          <table className="table">
+          <div className="table-responsive">
+<table className="table">
             <thead>
               <tr>
                 <th>Order</th>
@@ -156,23 +151,24 @@ export default function AdminDashboard() {
             <tbody>
               {recentOrders.map((order) => (
                 <tr key={order.id}>
-                  <td style={{ color: "var(--color-accent)", fontWeight: 600, fontSize: "0.83rem" }}>{order.id}</td>
+                  <td style={{ color: "var(--color-accent)", fontWeight: 600, fontSize: "16px" }}>{order.id}</td>
                   <td>{order.customer}</td>
-                  <td style={{ textTransform: "capitalize", color: "var(--color-sand)", fontSize: "0.83rem" }}>{order.type}</td>
+                  <td style={{ textTransform: "capitalize", color: "var(--color-sand)", fontSize: "16px" }}>{order.type}</td>
                   <td style={{ fontWeight: 500 }}>${order.total.toFixed(2)}</td>
                   <td><StatusBadge status={order.status} /></td>
-                  <td style={{ color: "var(--color-muted)", fontSize: "0.78rem" }}>{order.date}</td>
+                  <td style={{ color: "var(--color-muted)", fontSize: "16px" }}>{order.date}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+</div>
         </div>
       </div>
 
       {/* ── Quick actions ── */}
       <div>
         <h3 style={{
-          fontSize: "0.68rem",
+          fontSize: "14px",
           fontWeight: 600,
           letterSpacing: "0.14em",
           textTransform: "uppercase",
@@ -197,9 +193,8 @@ export default function AdminDashboard() {
                 border: "1px solid var(--border)",
                 borderRadius: "4px",
                 color: "var(--color-sand)",
-                fontSize: "0.78rem",
+                fontSize: "16px",
                 cursor: "pointer",
-                fontFamily: "'Inter', sans-serif",
                 transition: "border-color 0.15s, color 0.15s",
               }}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--color-accent)"; e.currentTarget.style.color = "var(--color-cream)"; }}

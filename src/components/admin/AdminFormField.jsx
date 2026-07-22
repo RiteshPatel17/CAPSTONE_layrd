@@ -16,7 +16,7 @@ export default function AdminFormField({ label, required, hint, children }) {
       </label>
       {children}
       {hint && (
-        <p style={{ fontSize: "0.75rem", color: "var(--color-muted)", margin: 0 }}>{hint}</p>
+        <p style={{ fontSize: "14px", color: "var(--color-muted)", margin: 0 }}>{hint}</p>
       )}
     </div>
   );

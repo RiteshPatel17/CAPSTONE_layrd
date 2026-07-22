@@ -53,7 +53,7 @@ export default function CartPage() {
       <div className="section" style={{ textAlign: "center" }}>
         <div className="container">
           <div style={{ padding: "80px 0" }}>
-            <div style={{ fontSize: "4rem", marginBottom: "20px" }}>🍰</div>
+            <div style={{ fontSize: "48px", marginBottom: "20px" }}>🍰</div>
             <h2 style={{ marginBottom: "12px" }}>Your cart is empty</h2>
             <p style={{ marginBottom: "32px" }}>Add some delicious items to get started!</p>
             <Link href="/shop">
@@ -71,8 +71,8 @@ export default function CartPage() {
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "40px" }}>
           <div>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", marginBottom: "4px" }}>Your Cart</h1>
-            <p style={{ fontSize: "0.875rem" }}>{totalItems} item{totalItems !== 1 ? "s" : ""}</p>
+            <h1 style={{ marginBottom: "4px" }}>Your Cart</h1>
+            <p style={{ fontSize: "16px" }}>{totalItems} item{totalItems !== 1 ? "s" : ""}</p>
           </div>
           <button onClick={clearCart} className="btn btn-ghost btn-sm">
             Clear Cart
@@ -88,7 +88,7 @@ export default function CartPage() {
               borderRadius: "4px",
               padding: "14px 20px",
               marginBottom: "24px",
-              fontSize: "0.875rem",
+              fontSize: "16px",
               color: "var(--color-accent)",
             }}
           >
@@ -96,7 +96,7 @@ export default function CartPage() {
           </div>
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: "40px", alignItems: "start" }}>
+        <div className="responsive-grid-cart" style={{ gap: "40px", alignItems: "start" }}>
           {/* Item list */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {items.map((item) => (
@@ -120,7 +120,7 @@ export default function CartPage() {
               top: "calc(var(--nav-height) + 24px)",
             }}
           >
-            <h4 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.3rem", marginBottom: "20px" }}>
+            <h4 style={{ fontSize: "24px", marginBottom: "20px" }}>
               Order Summary
             </h4>
 
@@ -139,9 +139,9 @@ export default function CartPage() {
             {/* Promo code */}
             <div style={{ marginTop: "20px" }}>
               {promoCode ? (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.15)", borderRadius: "3px", padding: "10px 14px", fontSize: "0.85rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.15)", borderRadius: "3px", padding: "10px 14px", fontSize: "16px" }}>
                   <span style={{ color: "#4ade80" }}>✓ {promoCode.code} applied</span>
-                  <button onClick={removePromo} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-sand)", fontSize: "0.8rem" }}>Remove</button>
+                  <button onClick={removePromo} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-sand)", fontSize: "16px" }}>Remove</button>
                 </div>
               ) : (
                 <div>
@@ -157,7 +157,7 @@ export default function CartPage() {
                     />
                     <button onClick={handleApplyPromo} disabled={isApplyingPromo} className="btn btn-outline btn-sm">{isApplyingPromo ? "Applying..." : "Apply"}</button>
                   </div>
-                  {promoError && <p style={{ fontSize: "0.78rem", color: "#f87171", marginTop: "6px" }}>{promoError}</p>}
+                  {promoError && <p style={{ fontSize: "16px", color: "#f87171", marginTop: "6px" }}>{promoError}</p>}
                 </div>
               )}
             </div>
@@ -169,7 +169,7 @@ export default function CartPage() {
               </button>
             </Link>
 
-            <Link href="/shop" style={{ display: "block", textAlign: "center", marginTop: "12px", fontSize: "0.8rem", color: "var(--color-sand)" }}>
+            <Link href="/shop" style={{ display: "block", textAlign: "center", marginTop: "12px", fontSize: "16px", color: "var(--color-sand)" }}>
               ← Continue Shopping
             </Link>
           </div>
@@ -184,24 +184,13 @@ export default function CartPage() {
 
 function CartRow({ item, onRemove, onUpdateQuantity }) {
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "64px 1fr auto",
-        gap: "20px",
-        alignItems: "center",
-        padding: "20px",
-        background: "var(--bg-card)",
-        border: "1px solid var(--border)",
-        borderRadius: "4px",
-      }}
-    >
+    <div className="cart-row-grid">
       {/* Image */}
       <div
         style={{
           width: "64px", height: "64px", borderRadius: "4px",
           background: "var(--border)", display: "flex",
-          alignItems: "center", justifyContent: "center", fontSize: "1.6rem",
+          alignItems: "center", justifyContent: "center", fontSize: "32px",
         }}
       >
         {item.type === "espresso" ? "☕" : "🍰"}
@@ -209,16 +198,16 @@ function CartRow({ item, onRemove, onUpdateQuantity }) {
 
       {/* Info */}
       <div>
-        <p style={{ fontSize: "0.95rem", fontWeight: 500, color: "var(--color-cream)", marginBottom: "2px" }}>
+        <p style={{ fontSize: "20px", fontWeight: 500, color: "var(--color-cream)", marginBottom: "2px" }}>
           {item.name}
         </p>
-        {item.sweetness && <p style={{ fontSize: "0.78rem", color: "var(--color-sand)" }}>Sweetness: {item.sweetness}</p>}
-        {item.size && <p style={{ fontSize: "0.78rem", color: "var(--color-sand)" }}>{item.size}ml</p>}
+        {item.sweetness && <p style={{ fontSize: "16px", color: "var(--color-sand)" }}>Sweetness: {item.sweetness}</p>}
+        {item.size && <p style={{ fontSize: "16px", color: "var(--color-sand)" }}>{item.size}ml</p>}
 
         {/* Quantity controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginTop: "10px" }}>
           <button onClick={() => onUpdateQuantity(item.quantity - 1)} style={qBtnStyle}>−</button>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-cream)", minWidth: "28px", textAlign: "center" }}>{item.quantity}</span>
+          <span style={{ fontSize: "20px", color: "var(--color-cream)", minWidth: "28px", textAlign: "center" }}>{item.quantity}</span>
           <button onClick={() => onUpdateQuantity(item.quantity + 1)} style={qBtnStyle}>+</button>
           <button onClick={onRemove} style={{ ...qBtnStyle, marginLeft: "8px", border: "1px solid #7f1d1d", color: "#f87171" }}>✕</button>
         </div>
@@ -226,11 +215,11 @@ function CartRow({ item, onRemove, onUpdateQuantity }) {
 
       {/* Price */}
       <div style={{ textAlign: "right" }}>
-        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.3rem", color: "var(--color-accent)" }}>
+        <p style={{ fontSize: "24px", color: "var(--color-accent)" }}>
           {formatPrice(item.price * item.quantity)}
         </p>
         {item.quantity > 1 && (
-          <p style={{ fontSize: "0.75rem", color: "var(--color-muted)" }}>{formatPrice(item.price)} each</p>
+          <p style={{ fontSize: "14px", color: "var(--color-muted)" }}>{formatPrice(item.price)} each</p>
         )}
       </div>
     </div>
@@ -246,7 +235,7 @@ const qBtnStyle = {
 function Row({ label, value, bold, green }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between" }}>
-      <span style={{ fontSize: "0.875rem", color: "var(--color-sand)" }}>{label}</span>
+      <span style={{ fontSize: "16px", color: "var(--color-sand)" }}>{label}</span>
       <span style={{ fontSize: bold ? "1rem" : "0.875rem", fontWeight: bold ? 600 : 400, color: green ? "#4ade80" : "var(--color-cream)" }}>
         {value}
       </span>

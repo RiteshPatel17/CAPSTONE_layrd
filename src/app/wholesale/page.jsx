@@ -11,10 +11,10 @@ export default function WholesalePage() {
       <section style={{ padding: "40px 24px 20px", background: "var(--bg-main)", borderBottom: "1px solid var(--border-soft)", textAlign: "center" }}>
         <div className="container" style={{ maxWidth: "800px" }}>
           <span className="badge badge-gold" style={{ marginBottom: "12px" }}>Trade Pricing</span>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", marginBottom: "10px", fontSize: "3.5rem", color: "var(--text-main)", lineHeight: "1.1" }}>
+          <h1 style={{ marginBottom: "10px", fontSize: "48px", color: "var(--text-main)", lineHeight: "100%" }}>
             Partner with <em style={{ color: "var(--accent)", fontStyle: "italic" }}>LÄYRD</em>
           </h1>
-          <p style={{ fontSize: "1.1rem", maxWidth: "600px", margin: "10px auto 0", color: "var(--text-muted)" }}>
+          <p style={{ fontSize: "20px", maxWidth: "600px", margin: "10px auto 0", color: "var(--text-muted)" }}>
             Premium 150ml cake cans at trade prices.
           </p>
         </div>
@@ -23,15 +23,15 @@ export default function WholesalePage() {
       {/* Main Content */}
       <section style={{ padding: "60px 24px", background: "var(--bg-main)" }}>
         <div className="container" style={{ maxWidth: "1000px", display: "flex", flexDirection: "column", gap: "80px" }}>
-          
+
           {/* 1. Pricing */}
           <div style={{ background: "var(--bg-soft)", padding: "50px", borderRadius: "8px", border: "1px solid var(--border-soft)", maxWidth: "800px", margin: "0 auto", width: "100%" }}>
-            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2.8rem", marginBottom: "30px", color: "var(--text-main)", textAlign: "center" }}>
+            <h2 style={{ fontSize: "48px", marginBottom: "30px", color: "var(--text-main)", textAlign: "center" }}>
               Wholesale Pricing
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "15px", maxWidth: "600px", margin: "0 auto" }}>
               {WHOLESALE_TIERS.map((tier, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", paddingBottom: "15px", borderBottom: "1px solid var(--border-soft)", fontSize: "1.2rem" }}>
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", paddingBottom: "15px", borderBottom: "1px solid var(--border-soft)", fontSize: "24px" }}>
                   <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>
                     {tier.maxCans === Infinity ? `${tier.minCans}+ cans` : `${tier.minCans}–${tier.maxCans} cans`}
                   </span>
@@ -43,7 +43,7 @@ export default function WholesalePage() {
 
           {/* 2. How it works */}
           <div style={{ padding: "20px 0", textAlign: "center" }}>
-            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2.8rem", marginBottom: "50px", color: "var(--text-main)" }}>
+            <h2 style={{ fontSize: "48px", marginBottom: "50px", color: "var(--text-main)" }}>
               How It Works
             </h2>
             <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", flexWrap: "wrap", gap: "20px" }}>
@@ -56,7 +56,7 @@ export default function WholesalePage() {
               ].map((step, i) => (
                 <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "15px", flex: "1 1 150px" }}>
                   <div>{step.icon}</div>
-                  <span style={{ color: "var(--text-main)", fontWeight: 600, fontSize: "1.15rem", lineHeight: "1.3" }}>{step.text}</span>
+                  <span style={{ color: "var(--text-main)", fontWeight: 600, fontSize: "20px", lineHeight: "120%" }}>{step.text}</span>
                 </div>
               ))}
             </div>
@@ -64,12 +64,12 @@ export default function WholesalePage() {
 
           {/* 3. Who Qualifies */}
           <div style={{ padding: "20px 0", maxWidth: "800px", margin: "0 auto", textAlign: "center", width: "100%" }}>
-            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2.8rem", marginBottom: "30px", color: "var(--text-main)" }}>
+            <h2 style={{ fontSize: "48px", marginBottom: "30px", color: "var(--text-main)" }}>
               Who Qualifies?
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px" }}>
+            <div className="admin-card-grid-200" style={{ gap: "20px" }}>
               {["Licensed retailers", "Cafés & coffee shops", "Restaurants & bistros", "Food service operators", "Corporate & office catering"].map((item, i) => (
-                <div key={i} style={{ padding: "24px", background: "var(--surface)", border: "1px solid var(--border-soft)", borderRadius: "8px", fontSize: "1.2rem", color: "var(--text-main)", fontWeight: 500 }}>
+                <div key={i} style={{ padding: "24px", background: "var(--surface)", border: "1px solid var(--border-soft)", borderRadius: "8px", fontSize: "24px", color: "var(--text-main)", fontWeight: 500 }}>
                   ✦ {item}
                 </div>
               ))}
@@ -78,7 +78,7 @@ export default function WholesalePage() {
 
           {/* 4. Key Details */}
           <div style={{ padding: "20px 0", maxWidth: "800px", margin: "0 auto", textAlign: "center", width: "100%" }}>
-            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2.8rem", marginBottom: "30px", color: "var(--text-main)" }}>
+            <h2 style={{ fontSize: "48px", marginBottom: "30px", color: "var(--text-main)" }}>
               Key Details
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "20px", textAlign: "left", background: "var(--surface)", padding: "40px", borderRadius: "8px", border: "1px solid var(--border-soft)" }}>
@@ -90,7 +90,7 @@ export default function WholesalePage() {
                 "Approval-based ordering system",
                 "Business account required",
               ].map((item, i) => (
-                <p key={i} style={{ fontSize: "1.2rem", color: "var(--text-muted)" }}>
+                <p key={i} style={{ fontSize: "24px", color: "var(--text-muted)" }}>
                   <span style={{ color: "var(--accent)", marginRight: "10px" }}>✦</span>
                   <strong style={{ color: "var(--text-main)" }}>{item.split(":")[0]}</strong>
                   {item.includes(":") ? `:${item.split(":")[1]}` : ""}
@@ -102,10 +102,10 @@ export default function WholesalePage() {
           {/* Centered Buttons */}
           <div style={{ textAlign: "center", marginTop: "10px", display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
             <Link href="/business">
-              <button 
+              <button
                 style={{
                   padding: "20px 60px",
-                  fontSize: "1.25rem",
+                  fontSize: "24px",
                   fontWeight: 600,
                   textTransform: "uppercase",
                   letterSpacing: "0.12em",
@@ -124,12 +124,12 @@ export default function WholesalePage() {
                 Apply for Wholesale
               </button>
             </Link>
-            
+
             <Link href="/business">
-              <button 
+              <button
                 style={{
                   padding: "16px 40px",
-                  fontSize: "1.1rem",
+                  fontSize: "20px",
                   fontWeight: 500,
                   textTransform: "uppercase",
                   letterSpacing: "0.1em",

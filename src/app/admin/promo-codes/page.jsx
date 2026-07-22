@@ -20,11 +20,11 @@ const EMPTY_FORM = {
 function Field({ label, children, hint }) {
   return (
     <div>
-      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-sand)", marginBottom: "6px" }}>
+      <label style={{ display: "block", fontSize: "14px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-sand)", marginBottom: "6px" }}>
         {label}
       </label>
       {children}
-      {hint && <p style={{ fontSize: "0.7rem", color: "var(--color-muted)", marginTop: "4px" }}>{hint}</p>}
+      {hint && <p style={{ fontSize: "14px", color: "var(--color-muted)", marginTop: "4px" }}>{hint}</p>}
     </div>
   );
 }
@@ -133,19 +133,19 @@ export default function AdminPromoCodesPage() {
       {/* Header row */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 600, color: "var(--text-main)" }}>Promo Codes</h2>
-          <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "var(--text-muted)" }}>Manage discount codes that customers can apply at checkout</p>
+          <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 600, color: "var(--text-main)" }}>Promo Codes</h2>
+          <p style={{ margin: "2px 0 0", fontSize: "16px", color: "var(--text-muted)" }}>Manage discount codes that customers can apply at checkout</p>
         </div>
         <button
           onClick={() => { setShowForm(!showForm); setFormError(""); setForm(EMPTY_FORM); }}
-          style={{ padding: "9px 18px", background: showForm ? "transparent" : "var(--color-accent)", color: showForm ? "var(--text-muted)" : "var(--color-black)", border: showForm ? "1px solid var(--border)" : "none", borderRadius: "4px", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", letterSpacing: "0.05em" }}
+          style={{ padding: "9px 18px", background: showForm ? "transparent" : "var(--color-accent)", color: showForm ? "var(--text-muted)" : "var(--color-black)", border: showForm ? "1px solid var(--border)" : "none", borderRadius: "4px", fontSize: "16px", fontWeight: 600, cursor: "pointer", letterSpacing: "0.05em" }}
         >
           {showForm ? "Cancel" : "+ New Promo Code"}
         </button>
       </div>
 
       {successMsg && (
-        <div style={{ marginBottom: "16px", padding: "12px 16px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.25)", borderRadius: "4px", color: "#4ade80", fontSize: "0.85rem" }}>
+        <div style={{ marginBottom: "16px", padding: "12px 16px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.25)", borderRadius: "4px", color: "#4ade80", fontSize: "16px" }}>
           ✓ {successMsg}
         </div>
       )}
@@ -153,9 +153,9 @@ export default function AdminPromoCodesPage() {
       {/* Create form */}
       {showForm && (
         <div style={{ background: "var(--surface)", border: "1px solid var(--border-soft)", borderRadius: "6px", padding: "28px 28px 24px", marginBottom: "24px" }}>
-          <h3 style={{ margin: "0 0 20px", fontSize: "1rem", fontWeight: 600, color: "var(--text-main)" }}>Create New Promo Code</h3>
+          <h3 style={{ margin: "0 0 20px", fontSize: "20px", fontWeight: 600, color: "var(--text-main)" }}>Create New Promo Code</h3>
           <form onSubmit={handleCreate}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "20px" }}>
+            <div className="responsive-grid-3" style={{ gap: "16px", marginBottom: "20px" }}>
 
               <Field label="Code *" hint="What customers type at checkout">
                 <input
@@ -164,7 +164,7 @@ export default function AdminPromoCodesPage() {
                   required
                   value={form.code}
                   onChange={e => setField("code", form.case_sensitive ? e.target.value : e.target.value.toUpperCase())}
-                  style={{ fontFamily: "monospace", letterSpacing: "0.08em" }}
+                  style={{ letterSpacing: "0.08em" }}
                 />
               </Field>
 
@@ -205,7 +205,7 @@ export default function AdminPromoCodesPage() {
                 onChange={e => setField("case_sensitive", e.target.checked)}
                 style={{ width: "16px", height: "16px", cursor: "pointer" }}
               />
-              <label htmlFor="case_sensitive" style={{ cursor: "pointer", fontSize: "0.85rem", color: "var(--text-main)" }}>
+              <label htmlFor="case_sensitive" style={{ cursor: "pointer", fontSize: "16px", color: "var(--text-main)" }}>
                 <strong>Case-sensitive code</strong>
                 <span style={{ color: "var(--text-muted)", marginLeft: "8px" }}>
                   {form.case_sensitive
@@ -216,7 +216,7 @@ export default function AdminPromoCodesPage() {
             </div>
 
             {formError && (
-              <div style={{ marginBottom: "16px", padding: "10px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "4px", color: "#f87171", fontSize: "0.83rem" }}>
+              <div style={{ marginBottom: "16px", padding: "10px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "4px", color: "#f87171", fontSize: "16px" }}>
                 {formError}
               </div>
             )}
@@ -224,7 +224,7 @@ export default function AdminPromoCodesPage() {
             <button
               type="submit"
               disabled={saving}
-              style={{ padding: "10px 24px", background: saving ? "rgba(201,169,110,0.4)" : "var(--color-accent)", color: "var(--color-black)", border: "none", borderRadius: "4px", fontWeight: 600, fontSize: "0.82rem", letterSpacing: "0.08em", cursor: saving ? "not-allowed" : "pointer" }}
+              style={{ padding: "10px 24px", background: saving ? "rgba(201,169,110,0.4)" : "var(--color-accent)", color: "var(--color-black)", border: "none", borderRadius: "4px", fontWeight: 600, fontSize: "16px", letterSpacing: "0.08em", cursor: saving ? "not-allowed" : "pointer" }}
             >
               {saving ? "Saving..." : "Create Promo Code"}
             </button>
@@ -238,15 +238,16 @@ export default function AdminPromoCodesPage() {
           <div style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)" }}>Loading promo codes...</div>
         ) : promos.length === 0 ? (
           <div style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)" }}>
-            <div style={{ fontSize: "2rem", marginBottom: "8px" }}>🏷️</div>
+            <div style={{ fontSize: "48px", marginBottom: "8px" }}>🏷️</div>
             <p style={{ margin: 0 }}>No promo codes yet. Create your first one above.</p>
           </div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="table-responsive">
+<table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "var(--bg-soft)", borderBottom: "1px solid var(--border-soft)" }}>
                 {["Code", "Discount", "Min Order", "Uses", "Expires", "Case", "Status", "Actions"].map(h => (
-                  <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: "0.68rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 500 }}>{h}</th>
+                  <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: "14px", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 500 }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -254,22 +255,22 @@ export default function AdminPromoCodesPage() {
               {promos.map((promo, i) => (
                 <tr key={promo.id} style={{ borderBottom: i < promos.length - 1 ? "1px solid var(--border-soft)" : "none", opacity: promo.is_active ? 1 : 0.55 }}>
                   <td style={{ padding: "12px 16px" }}>
-                    <span style={{ fontFamily: "monospace", fontWeight: 700, fontSize: "0.9rem", color: "var(--color-accent)", letterSpacing: "0.06em" }}>{promo.code}</span>
+                    <span style={{ fontWeight: 700, fontSize: "20px", color: "var(--color-accent)", letterSpacing: "0.06em" }}>{promo.code}</span>
                   </td>
-                  <td style={{ padding: "12px 16px", fontSize: "0.85rem", color: "var(--text-main)" }}>{formatValue(promo)}</td>
-                  <td style={{ padding: "12px 16px", fontSize: "0.85rem", color: "var(--text-muted)" }}>{promo.min_order_amount ? `$${parseFloat(promo.min_order_amount).toFixed(2)}` : "—"}</td>
-                  <td style={{ padding: "12px 16px", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                    {promo.uses_count || 0}
-                    {promo.max_uses ? <span> / {promo.max_uses}</span> : <span style={{ fontSize: "0.7rem" }}> ∞</span>}
+                  <td style={{ padding: "12px 16px", fontSize: "16px", color: "var(--text-main)" }}>{formatValue(promo)}</td>
+                  <td style={{ padding: "12px 16px", fontSize: "16px", color: "var(--text-muted)" }}>{promo.min_order_amount ? `$${parseFloat(promo.min_order_amount).toFixed(2)}` : "—"}</td>
+                  <td style={{ padding: "12px 16px", fontSize: "16px", color: "var(--text-muted)" }}>
+                    {promo.times_used || 0}
+                    {promo.max_uses ? <span> / {promo.max_uses}</span> : <span style={{ fontSize: "14px" }}> ∞</span>}
                   </td>
-                  <td style={{ padding: "12px 16px", fontSize: "0.82rem" }}>{formatExpiry(promo.expires_at)}</td>
-                  <td style={{ padding: "12px 16px", fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                  <td style={{ padding: "12px 16px", fontSize: "16px" }}>{formatExpiry(promo.expires_at)}</td>
+                  <td style={{ padding: "12px 16px", fontSize: "16px", color: "var(--text-muted)" }}>
                     {promo.case_sensitive ? "🔒 Exact" : "🔤 Any case"}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
                     <button
                       onClick={() => handleToggle(promo.id, promo.is_active)}
-                      style={{ padding: "3px 10px", borderRadius: "12px", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", border: "1px solid", background: promo.is_active ? "rgba(74,222,128,0.08)" : "rgba(248,113,113,0.08)", color: promo.is_active ? "#4ade80" : "#f87171", borderColor: promo.is_active ? "rgba(74,222,128,0.25)" : "rgba(248,113,113,0.25)" }}
+                      style={{ padding: "3px 10px", borderRadius: "12px", fontSize: "14px", fontWeight: 600, cursor: "pointer", border: "1px solid", background: promo.is_active ? "rgba(74,222,128,0.08)" : "rgba(248,113,113,0.08)", color: promo.is_active ? "#4ade80" : "#f87171", borderColor: promo.is_active ? "rgba(74,222,128,0.25)" : "rgba(248,113,113,0.25)" }}
                     >
                       {promo.is_active ? "Active" : "Inactive"}
                     </button>
@@ -277,7 +278,7 @@ export default function AdminPromoCodesPage() {
                   <td style={{ padding: "12px 16px" }}>
                     <button
                       onClick={() => handleDelete(promo.id, promo.code)}
-                      style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.8rem", padding: "4px 8px", borderRadius: "3px" }}
+                      style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "16px", padding: "4px 8px", borderRadius: "3px" }}
                       onMouseEnter={e => e.currentTarget.style.background = "rgba(248,113,113,0.08)"}
                       onMouseLeave={e => e.currentTarget.style.background = "none"}
                     >
@@ -288,6 +289,7 @@ export default function AdminPromoCodesPage() {
               ))}
             </tbody>
           </table>
+</div>
         )}
       </div>
     </AdminLayout>

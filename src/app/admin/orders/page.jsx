@@ -8,7 +8,8 @@ import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import StatusBadge from "@/components/admin/StatusBadge";
-import { getOrders, getOrderWithItems, updateOrderStatus, ORDER_STATUSES } from "@/lib/admin-orders";
+import { getOrders, getOrderWithItems, updateOrderStatus } from "@/lib/admin-orders";
+import { ORDER_STATUSES } from "@/lib/constants";
 
 function exportToCSV(orders) {
   const headers = ["Order ID","Customer","Email","Type","Fulfillment","Payment","Pay Status","Items","Subtotal","GST","Delivery","Total","Status","Date"];
@@ -29,7 +30,7 @@ function exportToCSV(orders) {
 
 function InfoRow({ label, value, bold }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.83rem", marginBottom: "7px" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "16px", marginBottom: "7px" }}>
       <span style={{ color: "var(--color-muted)" }}>{label}</span>
       <span style={{ fontWeight: bold ? 600 : 400, color: "var(--color-cream)" }}>{value}</span>
     </div>
@@ -83,7 +84,7 @@ export default function AdminOrdersPage() {
       subtitle={`${orders.length} total · ${orders.filter(o => o.status === "New").length} new`}
       actions={
         <button className="btn btn-ghost btn-sm"
-          style={{ fontSize: "0.75rem", border: "1px solid var(--border)" }}
+          style={{ fontSize: "14px", border: "1px solid var(--border)" }}
           onClick={() => exportToCSV(filtered)}>
           ↓ Export CSV
         </button>
@@ -106,12 +107,14 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* ── Layout: table + detail panel ── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: selected ? "1fr 340px" : "1fr",
-        gap: "20px",
-        alignItems: "start",
-      }}>
+        <div
+          className={selected ? "responsive-grid-bundle" : ""}
+          style={{
+            display: "grid",
+            gap: "32px",
+            alignItems: "start",
+          }}
+        >
         {/* Table */}
         <div style={{
           background: "var(--bg-card)",
@@ -122,7 +125,8 @@ export default function AdminOrdersPage() {
           {loading ? (
             <div style={{ padding: "40px", textAlign: "center", color: "var(--color-muted)" }}>Loading orders...</div>
           ) : (
-            <table className="table">
+            <div className="table-responsive">
+<table className="table">
               <thead>
                 <tr>
                   <th>Order</th>
@@ -152,18 +156,19 @@ export default function AdminOrdersPage() {
                         outline: selected?.id === order.id ? "1px solid rgba(201,169,110,0.15)" : "none",
                       }}
                     >
-                      <td style={{ color: "var(--color-accent)", fontWeight: 600, fontSize: "0.83rem" }}>{order.order_number}</td>
+                      <td style={{ color: "var(--color-accent)", fontWeight: 600, fontSize: "16px" }}>{order.order_number}</td>
                       <td>{order.customer_name}</td>
-                      <td style={{ textTransform: "capitalize", color: "var(--color-sand)", fontSize: "0.83rem" }}>{order.type || 'regular'}</td>
-                      <td style={{ textTransform: "capitalize", color: "var(--color-sand)", fontSize: "0.83rem" }}>{order.delivery_method}</td>
+                      <td style={{ textTransform: "capitalize", color: "var(--color-sand)", fontSize: "16px" }}>{order.type || 'regular'}</td>
+                      <td style={{ textTransform: "capitalize", color: "var(--color-sand)", fontSize: "16px" }}>{order.delivery_method}</td>
                       <td style={{ fontWeight: 500 }}>${Number(order.total).toFixed(2)}</td>
                       <td><StatusBadge status={order.status} /></td>
-                      <td style={{ color: "var(--color-muted)", fontSize: "0.78rem" }}>{new Date(order.created_at).toLocaleDateString()}</td>
+                      <td style={{ color: "var(--color-muted)", fontSize: "16px" }}>{new Date(order.created_at).toLocaleDateString()}</td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
+</div>
           )}
         </div>
 
@@ -179,11 +184,11 @@ export default function AdminOrdersPage() {
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
               <div>
-                <div style={{ fontSize: "0.75rem", color: "var(--color-accent)", fontWeight: 600 }}>{selected.order_number}</div>
-                <div style={{ fontSize: "1rem", fontWeight: 600, color: "var(--color-cream)", marginTop: "2px" }}>{selected.customer_name}</div>
+                <div style={{ fontSize: "14px", color: "var(--color-accent)", fontWeight: 600 }}>{selected.order_number}</div>
+                <div style={{ fontSize: "20px", fontWeight: 600, color: "var(--color-cream)", marginTop: "2px" }}>{selected.customer_name}</div>
               </div>
               <button onClick={() => setSelected(null)}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-muted)", fontSize: "1.1rem" }}>
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-muted)", fontSize: "20px" }}>
                 ×
               </button>
             </div>
@@ -195,12 +200,12 @@ export default function AdminOrdersPage() {
             <InfoRow label="Payment"     value={selected.payment_method} />
             <InfoRow label="Date"        value={new Date(selected.created_at).toLocaleString()} />
             {selected.delivery_address && (
-              <div style={{ marginTop: "8px", fontSize: "0.8rem", color: "var(--color-sand)" }}>
+              <div style={{ marginTop: "8px", fontSize: "16px", color: "var(--color-sand)" }}>
                 <strong>Address:</strong> {selected.delivery_address}
               </div>
             )}
             {selected.notes && (
-              <div style={{ marginTop: "8px", fontSize: "0.8rem", color: "var(--color-sand)", padding: "8px", background: "rgba(0,0,0,0.2)", borderRadius: "4px" }}>
+              <div style={{ marginTop: "8px", fontSize: "16px", color: "var(--color-sand)", padding: "8px", background: "rgba(0,0,0,0.2)", borderRadius: "4px" }}>
                 <strong>Notes:</strong> {selected.notes}
               </div>
             )}
@@ -211,7 +216,7 @@ export default function AdminOrdersPage() {
             {selected.lineItems && selected.lineItems.length > 0 && (
               <div style={{ marginBottom: "14px" }}>
                 <div style={{
-                  fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.12em",
+                  fontSize: "14px", fontWeight: 600, letterSpacing: "0.12em",
                   textTransform: "uppercase", color: "var(--color-muted)", marginBottom: "8px",
                 }}>
                   Items Ordered
@@ -219,7 +224,7 @@ export default function AdminOrdersPage() {
                 {selected.lineItems.map((item) => (
                   <div key={item.id} style={{
                     display: "flex", justifyContent: "space-between",
-                    fontSize: "0.82rem", marginBottom: "5px", color: "var(--color-cream)",
+                    fontSize: "16px", marginBottom: "5px", color: "var(--color-cream)",
                   }}>
                     <span>
                       {item.product_name} 
@@ -248,7 +253,7 @@ export default function AdminOrdersPage() {
             <div>
               <label style={{
                 display: "block",
-                fontSize: "0.65rem",
+                fontSize: "14px",
                 fontWeight: 600,
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
@@ -261,7 +266,7 @@ export default function AdminOrdersPage() {
                 className="input"
                 value={selected.status}
                 onChange={(e) => handleStatusChange(selected.id, e.target.value)}
-                style={{ fontSize: "0.85rem" }}
+                style={{ fontSize: "16px" }}
               >
                 {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -279,13 +284,12 @@ function FilterChip({ children, active, onClick, style: extra }) {
       onClick={onClick}
       style={{
         padding: "4px 11px",
-        fontSize: "0.72rem",
+        fontSize: "14px",
         background: active ? "rgba(201,169,110,0.12)" : "transparent",
         border: `1px solid ${active ? "rgba(201,169,110,0.4)" : "var(--border)"}`,
         borderRadius: "20px",
         color: active ? "var(--color-accent)" : "var(--color-muted)",
         cursor: "pointer",
-        fontFamily: "'Inter', sans-serif",
         transition: "all 0.15s",
         whiteSpace: "nowrap",
         ...extra,

@@ -72,8 +72,7 @@ export default function AdminLoginPage() {
       alignItems: "center",
       justifyContent: "center",
       padding: "24px",
-      fontFamily: "'Inter', sans-serif",
-    }}>
+      }}>
       <div style={{
         width: "100%",
         maxWidth: "400px",
@@ -82,8 +81,7 @@ export default function AdminLoginPage() {
         {/* Wordmark */}
         <div style={{ textAlign: "center", marginBottom: "40px" }}>
           <div style={{
-            fontFamily: "'Cormorant Garamond', serif",
-            fontSize: "2.2rem",
+            fontSize: "48px",
             fontWeight: 700,
             letterSpacing: "0.28em",
             color: "var(--text-main)",
@@ -92,7 +90,7 @@ export default function AdminLoginPage() {
             LÄYRD
           </div>
           <div style={{
-            fontSize: "0.7rem",
+            fontSize: "48px",
             letterSpacing: "0.18em",
             textTransform: "uppercase",
             color: "var(--text-muted)",
@@ -109,8 +107,7 @@ export default function AdminLoginPage() {
           padding: "40px 36px",
         }}>
           <h3 style={{
-            fontFamily: "'Cormorant Garamond', serif",
-            fontSize: "1.4rem",
+            fontSize: "14px",
             fontWeight: 500,
             color: "var(--text-main)",
             marginBottom: "28px",
@@ -123,7 +120,7 @@ export default function AdminLoginPage() {
             <div>
               <label style={{
                 display: "block",
-                fontSize: "0.72rem",
+                fontSize: "14px",
                 fontWeight: 500,
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",
@@ -151,7 +148,7 @@ export default function AdminLoginPage() {
             <div>
               <label style={{
                 display: "block",
-                fontSize: "0.72rem",
+                fontSize: "14px",
                 fontWeight: 500,
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",
@@ -182,7 +179,7 @@ export default function AdminLoginPage() {
                 background: "rgba(239,68,68,0.08)",
                 border: "1px solid rgba(239,68,68,0.2)",
                 borderRadius: "4px",
-                fontSize: "0.83rem",
+                fontSize: "16px",
                 color: "#f87171",
               }}>
                 {error}
@@ -200,12 +197,11 @@ export default function AdminLoginPage() {
                 border: "none",
                 borderRadius: "4px",
                 color: "var(--color-black)",
-                fontSize: "0.82rem",
+                fontSize: "16px",
                 fontWeight: 600,
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
                 cursor: loading ? "not-allowed" : "pointer",
-                fontFamily: "'Inter', sans-serif",
                 transition: "background 0.2s, transform 0.15s",
                 marginTop: "4px",
               }}
@@ -221,7 +217,7 @@ export default function AdminLoginPage() {
         <p style={{
           textAlign: "center",
           marginTop: "20px",
-          fontSize: "0.72rem",
+          fontSize: "14px",
           color: "var(--color-muted)",
           letterSpacing: "0.03em",
         }}>

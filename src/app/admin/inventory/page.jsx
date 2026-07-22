@@ -34,7 +34,7 @@ function stockBadge(status) {
       display: "inline-block",
       padding: "2px 10px",
       borderRadius: "3px",
-      fontSize: "0.7rem",
+      fontSize: "14px",
       fontWeight: 600,
       letterSpacing: "0.08em",
       textTransform: "uppercase",
@@ -56,7 +56,7 @@ function SummaryCard({ label, value, sub, accent }) {
       padding: "20px 22px",
     }}>
       <p style={{
-        fontSize: "0.68rem",
+        fontSize: "14px",
         letterSpacing: "0.12em",
         textTransform: "uppercase",
         color: "var(--color-muted)",
@@ -65,17 +65,16 @@ function SummaryCard({ label, value, sub, accent }) {
         {label}
       </p>
       <p style={{
-        fontFamily: "'Cormorant Garamond', serif",
-        fontSize: "2rem",
+        fontSize: "14px",
         fontWeight: 600,
         color: accent ? "var(--color-accent)" : "var(--color-cream)",
-        lineHeight: 1,
+        lineHeight: "100%",
         margin: 0,
       }}>
         {value}
       </p>
       {sub && (
-        <p style={{ fontSize: "0.72rem", color: "var(--color-muted)", marginTop: "4px", margin: "4px 0 0" }}>
+        <p style={{ fontSize: "14px", color: "var(--color-muted)", marginTop: "4px", margin: "4px 0 0" }}>
           {sub}
         </p>
       )}
@@ -199,7 +198,7 @@ export default function AdminInventoryPage() {
           className="btn btn-primary btn-sm"
           onClick={openAdd}
           disabled={loading}
-          style={{ fontSize: "0.78rem" }}
+          style={{ fontSize: "16px" }}
         >
           + Add Batch
         </button>
@@ -214,7 +213,7 @@ export default function AdminInventoryPage() {
           border: "1px solid rgba(74,222,128,0.3)",
           borderRadius: "4px",
           color: "#4ade80",
-          fontSize: "0.83rem",
+          fontSize: "16px",
           animation: "fadeIn 0.2s ease",
         }}>
           ✓ {toast}
@@ -240,7 +239,7 @@ export default function AdminInventoryPage() {
             borderRadius: "50%",
             animation: "spin 0.7s linear infinite",
           }} />
-          <span style={{ fontSize: "0.82rem" }}>Loading inventory…</span>
+          <span style={{ fontSize: "16px" }}>Loading inventory…</span>
         </div>
       ) : (
         <>
@@ -252,7 +251,7 @@ export default function AdminInventoryPage() {
               background: "rgba(239,68,68,0.06)",
               border: "1px solid rgba(239,68,68,0.2)",
               borderRadius: "4px",
-              fontSize: "0.83rem",
+              fontSize: "16px",
               color: "#f87171",
               display: "flex",
               alignItems: "flex-start",
@@ -267,12 +266,7 @@ export default function AdminInventoryPage() {
           )}
 
           {/* ── Summary cards ── */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-            gap: "14px",
-            marginBottom: "32px",
-          }}>
+          <div className="admin-card-grid-160" style={{ gap: "20px", marginBottom: "40px" }}>
             <SummaryCard label="Total Produced"  value={totalProduced}  sub="all batches" />
             <SummaryCard label="Committed"       value={totalCommitted} sub="orders in progress" />
             <SummaryCard label="Available Stock" value={totalAvailable} sub="ready to sell" accent />
@@ -281,7 +275,8 @@ export default function AdminInventoryPage() {
 
           {/* ── Stock Summary table ── */}
           <Section title="Stock by Flavour & Size">
-            <table className="table">
+            <div className="table-responsive">
+<table className="table">
               <thead>
                 <tr>
                   <th>Flavour</th>
@@ -317,11 +312,13 @@ export default function AdminInventoryPage() {
                 )}
               </tbody>
             </table>
+</div>
           </Section>
 
           {/* ── Batch History table ── */}
           <Section title="Batch History" style={{ marginTop: "28px" }}>
-            <table className="table">
+            <div className="table-responsive">
+<table className="table">
               <thead>
                 <tr>
                   <th>Batch ID</th>
@@ -345,16 +342,16 @@ export default function AdminInventoryPage() {
                 ) : (
                   batches.map((b) => (
                     <tr key={b.id}>
-                      <td style={{ color: "var(--color-accent)", fontSize: "0.78rem", fontFamily: "monospace" }}>
+                      <td style={{ color: "var(--color-accent)", fontSize: "16px", }}>
                         {b.id.slice(0, 8)}…
                       </td>
                       <td style={{ fontWeight: 500 }}>{b.flavour}</td>
                       <td style={{ color: "var(--color-sand)" }}>{b.size}</td>
                       <td style={{ color: "var(--color-muted)", textTransform: "capitalize" }}>{b.category}</td>
                       <td style={{ textAlign: "right" }}>{b.qtyProduced}</td>
-                      <td style={{ color: "var(--color-sand)", fontSize: "0.85rem" }}>{b.bakeDate}</td>
-                      <td style={{ color: "var(--color-muted)", fontSize: "0.85rem" }}>{b.expiryDate}</td>
-                      <td style={{ color: "var(--color-muted)", fontSize: "0.8rem", maxWidth: "180px" }}>
+                      <td style={{ color: "var(--color-sand)", fontSize: "16px" }}>{b.bakeDate}</td>
+                      <td style={{ color: "var(--color-muted)", fontSize: "16px" }}>{b.expiryDate}</td>
+                      <td style={{ color: "var(--color-muted)", fontSize: "16px", maxWidth: "180px" }}>
                         {b.notes || "—"}
                       </td>
                       <td>
@@ -368,7 +365,8 @@ export default function AdminInventoryPage() {
                 )}
               </tbody>
             </table>
-            <p style={{ margin: "10px 0 0", fontSize: "0.72rem", color: "var(--color-muted)" }}>
+</div>
+            <p style={{ margin: "10px 0 0", fontSize: "14px", color: "var(--color-muted)" }}>
               Stock is calculated: Produced − Committed orders. Changes when order statuses update.
             </p>
           </Section>
@@ -393,18 +391,18 @@ export default function AdminInventoryPage() {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-              <h4 style={{ fontFamily: "'Cormorant Garamond', serif", margin: 0, fontSize: "1.3rem" }}>
+              <h4 style={{ margin: 0, fontSize: "24px" }}>
                 {editTarget ? "Edit Batch" : "Add Batch"}
               </h4>
               <button onClick={closeForm}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-muted)", fontSize: "1.3rem", lineHeight: 1 }}>
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-muted)", fontSize: "24px", lineHeight: "100%" }}>
                 ×
               </button>
             </div>
 
             <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {/* Row 1: flavour + size */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <div className="responsive-grid-2" style={{ gap: "14px" }}>
                 <AdminFormField label="Flavour" required>
                   <select className="input" value={form.flavour}
                     onChange={(e) => handleField("flavour", e.target.value)}>
@@ -420,7 +418,7 @@ export default function AdminInventoryPage() {
               </div>
 
               {/* Row 2: category + qty produced */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <div className="responsive-grid-2" style={{ gap: "14px" }}>
                 <AdminFormField label="Category" required>
                   <select className="input" value={form.category}
                     onChange={(e) => handleField("category", e.target.value)}>
@@ -437,7 +435,7 @@ export default function AdminInventoryPage() {
               </div>
 
               {/* Row 3: dates */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <div className="responsive-grid-2" style={{ gap: "14px" }}>
                 <AdminFormField label="Bake Date" required>
                   <input className="input" type="date" required
                     value={form.bakeDate}
@@ -500,7 +498,7 @@ function Section({ title, children, style: extraStyle }) {
   return (
     <div style={{ marginTop: "0", ...extraStyle }}>
       <h3 style={{
-        fontSize: "0.7rem",
+        fontSize: "14px",
         fontWeight: 600,
         letterSpacing: "0.14em",
         textTransform: "uppercase",
@@ -527,13 +525,12 @@ function ActionBtn({ children, danger, onClick }) {
       onClick={onClick}
       style={{
         padding: "3px 10px",
-        fontSize: "0.72rem",
+        fontSize: "14px",
         background: "transparent",
         border: `1px solid ${danger ? "rgba(239,68,68,0.3)" : "var(--border)"}`,
         borderRadius: "3px",
         color: danger ? "#f87171" : "var(--color-sand)",
         cursor: "pointer",
-        fontFamily: "'Inter', sans-serif",
         transition: "border-color 0.15s, color 0.15s",
       }}
       onMouseEnter={(e) => {

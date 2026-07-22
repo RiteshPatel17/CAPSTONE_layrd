@@ -15,17 +15,16 @@ export default function EmptyState({ icon = "📭", title = "Nothing here yet", 
       textAlign: "center",
       gap: "12px",
     }}>
-      <span style={{ fontSize: "3rem", opacity: 0.4 }}>{icon}</span>
+      <span style={{ fontSize: "48px", opacity: 0.4 }}>{icon}</span>
       <h4 style={{
-        fontFamily: "'Cormorant Garamond', serif",
         color: "var(--color-sand)",
         fontWeight: 500,
-        fontSize: "1.2rem",
+        fontSize: "24px",
       }}>
         {title}
       </h4>
       {message && (
-        <p style={{ fontSize: "0.85rem", color: "var(--color-muted)", maxWidth: "320px", margin: 0 }}>
+        <p style={{ fontSize: "16px", color: "var(--color-muted)", maxWidth: "320px", margin: 0 }}>
           {message}
         </p>
       )}

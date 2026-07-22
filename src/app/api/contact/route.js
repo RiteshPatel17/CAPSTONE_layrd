@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "../../../lib/supabase.js";
-import { sendContactEmail } from "../../../lib/resend.js";
+
 
 export async function POST(request) {
   const body = await request.json();
@@ -30,7 +30,15 @@ export async function POST(request) {
     return NextResponse.json({ error: "Failed to send message" }, { status: 500 });
   }
 
-  await sendContactEmail({ name, email, subject, message });
+  try {
+    await fetch(`${process.env.NOTIFICATIONS_SERVICE_URL}/api/emails/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-internal-key': process.env.INTERNAL_SERVICE_KEY },
+      body: JSON.stringify({ name, email, subject, message })
+    });
+  } catch (err) {
+    console.error("[API Contact] Email error:", err);
+  }
 
   return NextResponse.json({ success: true, message: "Message received. We'll be in touch soon!" });
 }

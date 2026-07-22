@@ -1,15 +1,16 @@
+"use server";
 // ─────────────────────────────────────────────
 // LÄYRD – admin-orders.js
 // Service layer for Orders admin.
-// Queries Supabase directly.
+// Queries Supabase directly using Server Actions.
 // ─────────────────────────────────────────────
-import { supabase } from "./supabase";
-import { ORDER_STATUSES } from "./constants";
+import { getSupabaseAdmin } from "./supabase";
 
 /**
  * Get all orders.
  */
 export async function getOrders() {
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("orders")
     .select("*")
@@ -26,6 +27,7 @@ export async function getOrders() {
  * Get a single order with its line items.
  */
 export async function getOrderWithItems(id) {
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("orders")
     .select(`*, order_items(*)`)
@@ -45,6 +47,7 @@ export async function getOrderWithItems(id) {
  * Update order status by id.
  */
 export async function updateOrderStatus(id, status) {
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("orders")
     .update({ status })
@@ -58,6 +61,3 @@ export async function updateOrderStatus(id, status) {
   }
   return data;
 }
-
-export { ORDER_STATUSES };
-export const ORDER_TYPES = ["regular", "event", "wholesale"];
