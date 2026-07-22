@@ -11,12 +11,22 @@ import { BUNDLE_PRODUCTS } from "../../../../data/seed-products.js";
 import { formatPrice } from "../../../../lib/pricing.js";
 import toast from "react-hot-toast";
 
-// Hardcoded fallback images for products missing them
 const FALLBACK_IMAGES = [
   "/images/products/layrd-1.jpg",
   "/images/products/layrd-2.jpg",
   "/images/products/layrd-3.jpg",
 ];
+
+const isBundleEligibleCake = (product) => {
+  const isCake =
+    product.dbCategory === "cake" ||
+    (!product.dbCategory && ["core", "limited"].includes(product.category));
+
+  return (
+    isCake &&
+    ["core", "limited"].includes(product.category)
+  );
+};
 
 export default function BundleBuilderPage() {
   const params = useParams();
@@ -48,10 +58,13 @@ export default function BundleBuilderPage() {
     async function loadCans() {
       try {
         const res = await fetch("/api/products");
+        if (!res.ok) throw new Error("Failed to fetch products");
         const data = await res.json();
-        // Only allow core/limited products in bundles (no espresso)
-        const validCans = data.filter((p) => p.category === "core" || p.category === "limited");
-        setProducts(validCans);
+        
+        if (Array.isArray(data)) {
+          const validCans = data.filter(isBundleEligibleCake);
+          setProducts(validCans);
+        }
       } catch (err) {
         console.error("Failed to load products for bundle", err);
       } finally {
@@ -63,7 +76,7 @@ export default function BundleBuilderPage() {
 
   if (!bundleDef) return null;
 
-  const isFull = selection.length === canCount;
+  const isFull = selection.length >= canCount;
 
   function handleSelectProduct(product) {
     if (isFull) return;
@@ -92,7 +105,16 @@ export default function BundleBuilderPage() {
   const totalPrice = bundlePricePerUnit * bundleQuantity;
 
   function handleAddToCart() {
-    if (!isFull) return;
+    if (selection.length !== canCount) {
+      toast.error(`Please select exactly ${canCount} items.`);
+      return;
+    }
+
+    const invalidItems = selection.filter(p => !isBundleEligibleCake(p) || p.status !== "available");
+    if (invalidItems.length > 0) {
+      toast.error("Invalid or unavailable products in selection.");
+      return;
+    }
 
     // Create a description string of what's inside
     const counts = {};
@@ -156,61 +178,79 @@ export default function BundleBuilderPage() {
 
             {loading ? (
               <p>Loading available flavours...</p>
+            ) : products.length === 0 ? (
+              <div style={{ padding: "40px", background: "var(--bg-soft)", borderRadius: "8px", textAlign: "center", border: "1px dashed var(--border-soft)" }}>
+                <p style={{ fontSize: "18px", color: "var(--text-muted)" }}>No eligible cake flavours available at this time.</p>
+              </div>
             ) : (
-              <div className="admin-card-grid-200" style={{ gap: "24px" }}>
+              <div className="bundle-builder-grid">
                 {products.map((product, i) => {
                   const isLimited = product.category === "limited";
                   const imageUrl = product.image || FALLBACK_IMAGES[i % FALLBACK_IMAGES.length];
-
-                  // Count how many of this specific item are already selected
                   const countSelected = selection.filter(p => p.id === product.id).length;
+                  const isAvailable = product.status === "available";
 
                   return (
-                    <div key={product.id} className="card" style={{ padding: "16px", opacity: (isFull && countSelected === 0) ? 0.6 : 1, transition: "opacity 0.2s" }}>
-                      <div style={{ height: "160px", background: "var(--bg-soft)", marginBottom: "16px", borderRadius: "4px", overflow: "hidden", position: "relative" }}>
-                        <img src={imageUrl} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <div 
+                      key={product.id} 
+                      className={`bundle-builder-card ${countSelected > 0 ? "bundle-builder-card--selected" : ""} ${!isAvailable ? "disabled" : ""}`}
+                    >
+                      <div className="bundle-builder-media">
+                        <img src={imageUrl} alt={product.name} />
                         <div style={{ position: "absolute", top: "8px", left: "8px" }}>
-                          <span className={`badge ${isLimited ? "badge-gold" : "badge-gray"}`} style={{ fontSize: "14px", padding: "4px 8px" }}>
+                          <span className={`badge ${isLimited ? "badge-gold" : "badge-gray"}`} style={{ fontSize: "12px", padding: "4px 8px" }}>
                             {isLimited ? "Limited" : "Core"}
                           </span>
                         </div>
+                        {!isAvailable && (
+                           <div style={{ position: "absolute", top: "8px", right: "8px" }}>
+                             <span className="badge badge-gray" style={{ fontSize: "12px", padding: "4px 8px", textTransform: "capitalize" }}>
+                               {product.status.replace("-", " ")}
+                             </span>
+                           </div>
+                        )}
                       </div>
 
-                      <h4 style={{ fontSize: "24px", color: "var(--text-main)", marginBottom: "4px", lineHeight: "120%" }}>
-                        {product.name}
-                      </h4>
-                      {isLimited && (
-                        <p style={{ fontSize: "16px", color: "var(--accent)", marginBottom: "12px" }}>+${bundleDef.limitedPremium}</p>
-                      )}
+                      <div className="bundle-builder-body">
+                        <h4 className="bundle-builder-title">
+                          {product.name}
+                        </h4>
+                        
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          {isLimited ? (
+                            <span style={{ fontSize: "14px", color: "var(--accent)" }}>+${bundleDef.limitedPremium} Premium</span>
+                          ) : (
+                            <span style={{ fontSize: "14px", color: "var(--text-muted)", visibility: "hidden" }}>Placeholder</span>
+                          )}
+                        </div>
 
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: isLimited ? "0" : "12px", minHeight: "36px" }}>
-                        <span style={{ fontSize: "16px", color: "var(--text-muted)" }}>
-                          {countSelected > 0 ? `${countSelected} in bundle` : ""}
-                        </span>
-
-                        {countSelected > 0 ? (
-                          <div style={{ display: "flex", alignItems: "center", border: "1px solid var(--border-soft)", borderRadius: "4px", overflow: "hidden" }}>
-                            <button
-                              onClick={() => handleRemoveOneOfProduct(product)}
-                              style={{ width: "32px", height: "32px", background: "var(--bg-soft)", border: "none", borderRight: "1px solid var(--border-soft)", cursor: "pointer", color: "var(--text-main)", display: "flex", alignItems: "center", justifyContent: "center" }}
-                            ><Minus size={14} /></button>
-                            <span style={{ fontSize: "20px", width: "28px", textAlign: "center", fontWeight: 500, color: "var(--text-main)" }}>{countSelected}</span>
+                        <div className="bundle-builder-action">
+                          {countSelected > 0 ? (
+                            <div style={{ display: "flex", alignItems: "center", border: "1px solid var(--border-soft)", borderRadius: "4px", overflow: "hidden", width: "100%" }}>
+                              <button
+                                onClick={() => handleRemoveOneOfProduct(product)}
+                                style={{ flex: 1, height: "32px", background: "var(--bg-soft)", border: "none", borderRight: "1px solid var(--border-soft)", cursor: "pointer", color: "var(--text-main)", display: "flex", alignItems: "center", justifyContent: "center" }}
+                                aria-label={`Remove one ${product.name}`}
+                              ><Minus size={14} /></button>
+                              <span style={{ fontSize: "16px", width: "32px", textAlign: "center", fontWeight: 500, color: "var(--text-main)" }}>{countSelected}</span>
+                              <button
+                                onClick={() => handleSelectProduct(product)}
+                                disabled={isFull || !isAvailable}
+                                style={{ flex: 1, height: "32px", background: "var(--bg-soft)", border: "none", borderLeft: "1px solid var(--border-soft)", cursor: (isFull || !isAvailable) ? "not-allowed" : "pointer", color: (isFull || !isAvailable) ? "var(--text-muted)" : "var(--text-main)", display: "flex", alignItems: "center", justifyContent: "center" }}
+                                aria-label={`Add another ${product.name}`}
+                              ><Plus size={14} /></button>
+                            </div>
+                          ) : (
                             <button
                               onClick={() => handleSelectProduct(product)}
-                              disabled={isFull}
-                              style={{ width: "32px", height: "32px", background: "var(--bg-soft)", border: "none", borderLeft: "1px solid var(--border-soft)", cursor: isFull ? "not-allowed" : "pointer", color: isFull ? "var(--text-muted)" : "var(--text-main)", display: "flex", alignItems: "center", justifyContent: "center" }}
-                            ><Plus size={14} /></button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => handleSelectProduct(product)}
-                            disabled={isFull || product.status !== "available"}
-                            className={`btn ${isFull ? "btn-outline" : "btn-primary"} btn-sm`}
-                            style={{ padding: "8px 16px", fontSize: "14px" }}
-                          >
-                            {product.status !== "available" ? "Sold Out" : "Add"}
-                          </button>
-                        )}
+                              disabled={isFull || !isAvailable}
+                              className={`btn ${isFull ? "btn-outline" : "btn-primary"} btn-sm`}
+                              style={{ width: "100%", padding: "8px", fontSize: "14px" }}
+                            >
+                              {!isAvailable ? "Unavailable" : "Add"}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -220,7 +260,7 @@ export default function BundleBuilderPage() {
           </div>
 
           {/* Right Column: Bundle Summary Sticky Panel */}
-          <div style={{ position: "sticky", top: "100px", background: "var(--surface)", border: "1px solid var(--border-soft)", borderRadius: "8px", padding: "24px", display: "flex", flexDirection: "column" }}>
+          <div className="bundle-sidebar">
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
               <h3 style={{ fontSize: "32px", color: "var(--text-main)" }}>

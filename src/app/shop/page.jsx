@@ -1,298 +1,313 @@
 "use client";
 // ─────────────────────────────────────────────
-// LÄYRD – Shop page (/shop)
-// Product grid with category filters
+// LÄYRD – Homepage
+// Hero + featured products + brand story
 // ─────────────────────────────────────────────
-import { useState, useEffect } from "react";
-import { PRODUCTS, ESPRESSO_PRODUCTS, BUNDLE_PRODUCTS } from "../../data/seed-products.js";
-import ProductCard from "../../components/products/ProductCard.jsx";
-import { useCart } from "../../components/cart/CartContext.jsx";
-import { formatPrice } from "../../lib/pricing.js";
-import toast from "react-hot-toast";
 import Link from "next/link";
+import { Truck, MapPin, CalendarDays, Store, AlertTriangle } from "lucide-react";
+import { PRODUCTS } from "../data/seed-products.js";
+import { BRAND, STORAGE_INFO } from "../lib/constants.js";
+import ProductCard from "../components/products/ProductCard.jsx";
 
-const FILTERS = ["All", "Core Flavours", "Limited Flavours", "Bundles", "Espresso"];
-
-export default function ShopPage() {
-  const [activeFilter, setActiveFilter] = useState("All");
-  const { addItem, openCart } = useCart();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/products");
-        if (!res.ok) throw new Error("API or logic missing: Failed to fetch products");
-        const data = await res.json();
-        setProducts(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadProducts();
-  }, []);
-
-  // Filter products locally for the tabs
-  // Make sure to filter out items named "Espresso Shot" from the cake grid just in case they have wrong DB categories
-  let filteredProducts = products.filter(p => !p.name.toLowerCase().includes("espresso shot"));
-  if (activeFilter === "Core Flavours") filteredProducts = filteredProducts.filter((p) => p.category === "core");
-  else if (activeFilter === "Limited Flavours") filteredProducts = filteredProducts.filter((p) => p.category === "limited");
-  else if (activeFilter === "All") filteredProducts = filteredProducts.filter((p) => p.category !== "bundle");
-  else filteredProducts = [];
-
-  const showBundles = activeFilter === "All" || activeFilter === "Bundles";
-  const showEspresso = activeFilter === "All" || activeFilter === "Espresso";
+export default function HomePage() {
+  const featuredProducts = PRODUCTS.filter((p) => p.status === "available").slice(0, 3);
 
   return (
-    <div className="section">
-      <div className="container">
-        {/* Header */}
-        <div style={{ marginBottom: "48px" }}>
-          <p style={{ fontSize: "14px", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--color-accent)", marginBottom: "10px" }}>
-            LÄYRD Collection
+    <>
+      {/* ─── Hero ─── */}
+      <section
+        className="hero-gradient"
+        style={{
+          minHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          padding: "80px 24px",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Decorative rings */}
+        <div className="hero-decorative-ring-1" aria-hidden="true" />
+        <div className="hero-decorative-ring-2" aria-hidden="true" />
+
+        <div className="animate-fade-in" style={{ position: "relative", zIndex: 1 }}>
+          {/* Pre-title */}
+          <p
+            style={{
+              fontSize: "14px",
+              letterSpacing: "0.3em",
+              textTransform: "uppercase",
+              color: "var(--accent-primary)",
+              marginBottom: "20px",
+              fontWeight: 600,
+            }}
+          >
+            Calgary · Boutique Desserts
           </p>
-          <h1 style={{ marginBottom: "8px" }}>
-            The Shop
+
+          {/* Brand name */}
+          <h1
+            style={{
+              fontSize: "100px",
+              fontWeight: 500,
+              letterSpacing: "0.25em",
+              color: "var(--text-primary)",
+              lineHeight: "100%",
+              marginBottom: "24px",
+            }}
+          >
+            {BRAND.name}
           </h1>
-          <div className="divider-accent" />
-        </div>
 
-        {/* Filter tabs */}
-        <div className="hide-scrollbar flex-wrap" style={{ display: "flex", gap: "10px", marginBottom: "40px", paddingBottom: "4px" }}>
-          {FILTERS.map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`tag ${activeFilter === filter ? "active" : ""}`}
-              style={{ flexShrink: 0 }}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
-
-        {/* Cans grid */}
-        {filteredProducts.length > 0 && (
-          <>
-            <h3
-              style={{
-                fontSize: "32px",
-                marginBottom: "24px",
-                color: "var(--color-cream)",
-              }}
-            >
-              {activeFilter === "All" ? "Cake in a Can · 250ml" : activeFilter}
-            </h3>
-            <div className="product-grid" style={{ marginBottom: "64px" }}>
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Bundles */}
-        {showBundles && (
-          <>
-            <h3 style={{ fontSize: "32px", marginBottom: "8px" }}>
-              Bundles
-            </h3>
-            <p style={{ fontSize: "16px", color: "var(--color-sand)", marginBottom: "24px" }}>
-              Mix and match any flavours. Add $1 per limited flavour included.
-            </p>
-            <div className="bundle-grid-auto" style={{ marginBottom: "64px" }}>
-              {BUNDLE_PRODUCTS.map((bundle) => (
-                <BundleCard key={bundle.id} bundle={bundle} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Espresso */}
-        {showEspresso && (
-          <>
-            <h3 style={{ fontSize: "32px", marginBottom: "8px" }}>
-              Espresso Shots
-            </h3>
-            <p style={{ fontSize: "16px", color: "var(--color-sand)", marginBottom: "24px" }}>
-              Counts toward your 4-item delivery minimum. Choose your sweetness preference.
-            </p>
-            <div className="espresso-grid-auto" style={{ marginBottom: "40px" }}>
-              {ESPRESSO_PRODUCTS.map((product) => (
-                <EspressoCard key={product.id} product={product} />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function BundleCard({ bundle }) {
-  return (
-    <div className="card" style={{ padding: "28px" }}>
-      <div className="flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", gap: "12px" }}>
-        <div>
-          <span className="badge badge-gold" style={{ marginBottom: "10px" }}>
-            {bundle.canCount} Cans
-          </span>
-          <h4
+          {/* Gold divider */}
+          <div
             style={{
-              fontSize: "24px",
-              color: "var(--color-cream)",
-              marginTop: "8px",
+              width: "60px",
+              height: "2px",
+              background: "var(--accent-primary)",
+              margin: "0 auto 24px",
             }}
-          >
-            {bundle.name}
-          </h4>
-        </div>
-        <div style={{ fontSize: "32px", color: "var(--color-accent)" }}>
-          {formatPrice(bundle.basePrice)}
-        </div>
-      </div>
-      <p style={{ fontSize: "16px", color: "var(--color-sand)", marginBottom: "20px", lineHeight: "160%" }}>
-        {bundle.description}
-      </p>
-      <p style={{ fontSize: "16px", color: "var(--color-muted)", marginBottom: "20px" }}>
-        +$1 per limited flavour included
-      </p>
-      <a href={`/shop/bundle/${bundle.canCount}`}>
-        <button className="btn btn-primary" style={{ width: "100%" }}>
-          Customize Bundle
-        </button>
-      </a>
-    </div>
-  );
-}
-
-function EspressoCard({ product }) {
-  const { items, addItem, updateQuantity, openCart } = useCart();
-  const [sweetness, setSweetness] = useState("Black");
-
-  const cartItemId = `${product.id}-${sweetness}`;
-  const cartItem = items.find((i) => i.id === cartItemId);
-
-  function handleAdd(e) {
-    e.preventDefault();
-    addItem({
-      id: cartItemId,
-      name: product.name,
-      price: product.price,
-      type: "espresso",
-      quantity: 1,
-      sweetness,
-    });
-    toast.success("Added to cart", {
-      style: {
-        background: 'var(--bg-card)',
-        color: 'var(--text-main)',
-        border: '1px solid var(--border)',
-      },
-    });
-  }
-
-  function handleIncrement(e) {
-    e.preventDefault();
-    updateQuantity(cartItemId, (cartItem?.quantity || 0) + 1);
-  }
-
-  function handleDecrement(e) {
-    e.preventDefault();
-    updateQuantity(cartItemId, (cartItem?.quantity || 1) - 1);
-  }
-
-  return (
-    <Link href={`/shop/${product.id}`} style={{ textDecoration: "none" }}>
-      <div className="card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-        {/* Product Image */}
-        <div
-          style={{
-            height: "180px",
-            position: "relative",
-            overflow: "hidden",
-            background: "var(--bg-soft)",
-          }}
-        >
-          <img
-            src="/images/products/espresso.png"
-            alt={product.name}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center",
-              display: "block",
-              transition: "transform 0.4s ease",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.04)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
           />
-        </div>
 
-        <div style={{ padding: "24px", flex: 1, display: "flex", flexDirection: "column" }}>
-          <h4
+          {/* Tagline */}
+          <p
             style={{
-              fontSize: "24px",
-              color: "var(--color-cream)",
-              marginBottom: "4px",
+              fontSize: "20px",
+              color: "var(--text-secondary)",
+              letterSpacing: "0.1em",
+              marginBottom: "48px",
+              fontStyle: "italic",
+              fontWeight: 500,
             }}
           >
-            {product.name}
-          </h4>
-          <p style={{ fontSize: "24px", color: "var(--color-accent)", marginBottom: "16px" }}>
-            {formatPrice(product.price)}
+            {BRAND.tagline}
           </p>
 
-          {/* Sweetness selector */}
-          <div style={{ marginBottom: "16px", flex: 1 }}>
-            <label className="label">Sweetness</label>
-            <select
-              value={sweetness}
-              onClick={(e) => e.preventDefault()}
-              onChange={(e) => {
-                e.preventDefault();
-                setSweetness(e.target.value);
-              }}
-              className="input"
-              style={{ marginTop: "6px" }}
-            >
-              {product.sweetness.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+          {/* CTA buttons */}
+          <div className="hero-actions">
+            <Link href="/shop" className="btn btn-primary hero-action">
+              Shop Now
+            </Link>
+            <Link href="/events" className="btn btn-outline hero-action">
+              Events
+            </Link>
+          </div>
+        </div>
+
+
+      </section>
+
+      {/* ─── Featured Products ─── */}
+      <section className="section" style={{ background: "var(--bg-secondary)" }}>
+        <div className="container">
+          <div style={{ textAlign: "center", marginBottom: "48px" }}>
+            <p style={{ fontSize: "14px", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-primary)", marginBottom: "12px" }}>
+              Handcrafted
+            </p>
+            <h2 style={{}}>
+              Our Signature Flavours
+            </h2>
+            <div className="divider-accent" style={{ margin: "16px auto" }} />
+            <p style={{ maxWidth: "480px", margin: "0 auto", fontSize: "20px" }}>
+              Premium cheesecakes and tiramisus, crafted fresh and served in convenient 250ml cans.
+            </p>
           </div>
 
-          {cartItem ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "auto" }}>
-              <button
-                onClick={handleDecrement}
-                style={{ width: "32px", height: "32px", borderRadius: "50%", border: "1px solid var(--border-soft)", background: "var(--bg-main)", color: "var(--text-main)", cursor: "pointer", fontSize: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}
-              >
-                −
-              </button>
-              <span style={{ fontSize: "24px", fontWeight: 600, color: "var(--text-main)", minWidth: "20px", textAlign: "center", flex: 1 }}>
-                {cartItem.quantity}
-              </span>
-              <button
-                onClick={handleIncrement}
-                style={{ width: "32px", height: "32px", borderRadius: "50%", border: "1px solid var(--border-soft)", background: "var(--bg-main)", color: "var(--text-main)", cursor: "pointer", fontSize: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}
-              >
-                +
-              </button>
-            </div>
-          ) : (
-            <button onClick={handleAdd} className="btn btn-primary" style={{ width: "100%", marginTop: "auto" }}>
-              Add to Cart
-            </button>
-          )}
+          <div className="homepage-product-grid">
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+
+          <div style={{ textAlign: "center", marginTop: "40px" }}>
+            <Link href="/shop" className="btn btn-outline">
+              View All Flavours
+            </Link>
+          </div>
         </div>
-      </div>
-    </Link>
+      </section>
+
+      {/* ─── Brand Story ─── */}
+      <section className="section">
+        <div className="container">
+          <div
+            className="responsive-grid-2"
+            style={{
+              gap: "32px",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <p style={{ fontSize: "14px", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-primary)", marginBottom: "12px" }}>
+                Our Story
+              </p>
+              <h2 style={{ marginBottom: "20px" }}>
+                Boutique Desserts, <br />
+                <em style={{ fontStyle: "italic", color: "var(--text-secondary)" }}>Crafted with Intent</em>
+              </h2>
+              <div className="divider-accent" />
+              <p style={{ marginBottom: "16px" }}>
+                LÄYRD was born from a simple belief: exceptional desserts shouldn&apos;t require a celebration.
+                Our handcrafted cheesecakes and tiramisus are layered with care — each 250ml can a
+                perfectly portioned indulgence.
+              </p>
+              <p style={{ marginBottom: "32px" }}>
+                Made fresh in Calgary&apos;s Pineridge NE neighbourhood. Available for pickup and
+                Calgary-wide delivery.
+              </p>
+              <Link href="/shop" className="btn btn-primary">
+                Explore the Shop
+              </Link>
+            </div>
+
+            {/* Right: Storage info card */}
+            <div
+              style={{
+                background: "var(--surface-primary)",
+                border: "1px solid var(--border-soft)",
+                borderRadius: "4px",
+                padding: "40px",
+              }}
+            >
+              <h4
+                style={{
+                  fontSize: "24px",
+                  marginBottom: "8px",
+                  color: "var(--text-primary)",
+                }}
+              >
+                Fresh. Always.
+              </h4>
+              <div className="divider-accent" />
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "20px" }}>
+                {STORAGE_INFO.map((info, i) => (
+                  <div key={i} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                    <span style={{ color: "var(--accent-primary)", flexShrink: 0, marginTop: "2px" }}>✦</span>
+                    <span style={{ fontSize: "20px", color: "var(--text-secondary)" }}>{info}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div
+                style={{
+                  marginTop: "32px",
+                  paddingTop: "24px",
+                  borderTop: "1px solid var(--border-soft)",
+                  display: "flex",
+                  gap: "10px",
+                  alignItems: "flex-start",
+                }}
+              >
+                <AlertTriangle
+                  size={15}
+                  strokeWidth={1.5}
+                  style={{ color: "var(--text-secondary)", flexShrink: 0, marginTop: "2px" }}
+                />
+                <p style={{ fontSize: "14px", color: "var(--text-secondary)", lineHeight: "160%", margin: 0 }}>
+                  Contains dairy, gluten, and may contain nuts. Check individual product pages for full allergen info.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Responsive fix */}
+
+
+      </section>
+
+      {/* ─── Services Banner ─── */}
+      <section
+        style={{
+          background: "var(--bg-secondary)",
+          borderTop: "1px solid var(--border-soft)",
+          borderBottom: "1px solid var(--border-soft)",
+          padding: "48px 0",
+        }}
+      >
+        <div className="container">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "32px",
+              textAlign: "center",
+            }}
+          >
+            {[
+              { Icon: Truck, title: "Calgary Delivery", text: "Fast delivery across Calgary from $5" },
+              { Icon: MapPin, title: "Pickup Available", text: "Order online, collect in Pineridge NE" },
+              { Icon: CalendarDays, title: "Private Events", text: "Custom orders with AI-designed labels" },
+              { Icon: Store, title: "Wholesale", text: "Trade pricing for retailers & food service" },
+            ].map((item) => (
+              <div key={item.title}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "48px",
+                    height: "48px",
+                    borderRadius: "2px",
+                    border: "1px solid var(--border-soft)",
+                    margin: "0 auto 16px",
+                    color: "var(--accent-primary)",
+                  }}
+                >
+                  <item.Icon size={22} strokeWidth={1.25} />
+                </div>
+                <h5
+                  style={{
+                    fontSize: "20px",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: "var(--text-primary)",
+                    marginBottom: "6px",
+                  }}
+                >
+                  {item.title}
+                </h5>
+                <p style={{ fontSize: "20px", color: "var(--text-secondary)" }}>{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CTA Banner ─── */}
+      <section
+        className="hero-gradient"
+        style={{
+          padding: "100px 24px",
+          textAlign: "center",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(135deg, rgba(184,155,94,0.06) 0%, transparent 60%)",
+            pointerEvents: "none",
+          }}
+        />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <h2 style={{ marginBottom: "20px" }}>
+            Ready to Get <em style={{ color: "var(--accent-primary)", fontStyle: "italic" }}>LÄYRD</em>?
+          </h2>
+          <p style={{ maxWidth: "400px", margin: "0 auto 36px", fontSize: "20px" }}>
+            Order online and enjoy premium desserts at home. Minimum 4 items for delivery.
+          </p>
+          <Link href="/shop" className="btn btn-primary btn-lg">
+            Shop the Collection
+          </Link>
+        </div>
+      </section>
+    </>
   );
 }

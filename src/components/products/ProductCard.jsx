@@ -75,32 +75,11 @@ export default function ProductCard({ product }) {
   }
 
   return (
-    <Link href={`/shop/${product.id}`} style={{ textDecoration: "none" }}>
-      <div className="card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-
-        {/* ── Product image ─────────────────────────────────── */}
-        <div
-          style={{
-            height: "240px",
-            position: "relative",
-            overflow: "hidden",
-            background: "var(--bg-soft)",
-          }}
-        >
-          <img
-            src={imageUrl}
-            alt={flavour?.name || product.name}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center",
-              display: "block",
-              transition: "transform 0.4s ease",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.04)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-          />
+    <div className="card product-card-container">
+      {/* ── Product image ─────────────────────────────────── */}
+      <Link href={`/shop/${product.id}`} style={{ display: "block" }}>
+        <div className="product-card-media">
+          <img src={imageUrl} alt={flavour?.name || product.name} />
 
           {/* Category badge — top left */}
           <div style={{ position: "absolute", top: "12px", left: "12px" }}>
@@ -109,37 +88,28 @@ export default function ProductCard({ product }) {
             </span>
           </div>
 
-          {/* Status badge — top right (only when not available) */}
+          {/* Status badge — top right */}
           {product.status !== "available" && (
             <div style={{ position: "absolute", top: "12px", right: "12px" }}>
               <span className={`badge ${statusInfo.cls}`}>{statusInfo.label}</span>
             </div>
           )}
         </div>
+      </Link>
 
-        {/* ── Product info ──────────────────────────────────── */}
-        <div style={{ padding: "20px", flex: 1, display: "flex", flexDirection: "column" }}>
-          <p style={{ fontSize: "20px", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)", marginBottom: "6px", fontWeight: 600 }}>
+      {/* ── Product info ──────────────────────────────────── */}
+      <div className="product-card-body">
+        <Link href={`/shop/${product.id}`} style={{ textDecoration: "none", display: "flex", flexDirection: "column", flex: 1 }}>
+          <p className="product-card-eyebrow">
             {product.size}ml
           </p>
-          <h3
-            style={{
-              fontSize: "32px",
-              fontWeight: 600,
-              color: "var(--text-main)",
-              marginBottom: "8px",
-              lineHeight: "120%",
-            }}
-          >
+          <h3 className="product-card-title">
             {flavour?.name || product.name}
           </h3>
           {flavour && (
             <p
+              className="product-card-desc"
               style={{
-                fontSize: "14px",
-                color: "var(--text-muted)",
-                lineHeight: "160%",
-                flex: 1,
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
@@ -149,52 +119,43 @@ export default function ProductCard({ product }) {
               {flavour.description}
             </p>
           )}
+        </Link>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px", flexWrap: "wrap", gap: "12px" }}>
-            <span
-              style={{
-                fontSize: "32px",
-                fontWeight: 600,
-                /* --price-color: dark brown/gold in day, lighter gold in night */
-                color: "var(--price-color)",
-                letterSpacing: "0.02em",
-              }}
-            >
-              {formatPrice(product.price)}
-            </span>
+        <div className="product-card-footer">
+          <span className="product-card-price">
+            {formatPrice(product.price)}
+          </span>
 
-            {cartItem ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <button
-                  onClick={handleDecrement}
-                  style={{ width: "32px", height: "32px", borderRadius: "50%", border: "1px solid var(--border-soft)", background: "var(--bg-main)", color: "var(--text-main)", cursor: "pointer", fontSize: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}
-                >
-                  −
-                </button>
-                <span style={{ fontSize: "24px", fontWeight: 600, color: "var(--text-main)", minWidth: "20px", textAlign: "center" }}>
-                  {cartItem.quantity}
-                </span>
-                <button
-                  onClick={handleIncrement}
-                  style={{ width: "32px", height: "32px", borderRadius: "50%", border: "1px solid var(--border-soft)", background: "var(--bg-main)", color: "var(--text-main)", cursor: "pointer", fontSize: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}
-                >
-                  +
-                </button>
-              </div>
-            ) : (
+          {cartItem ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <button
-                onClick={handleAddToCart}
-                disabled={product.status !== "available"}
-                className="btn btn-primary btn-sm"
-                style={{ fontSize: "14px", padding: "8px 16px" }}
+                onClick={handleDecrement}
+                style={{ width: "32px", height: "32px", borderRadius: "50%", border: "1px solid var(--border-soft)", background: "var(--bg-main)", color: "var(--text-main)", cursor: "pointer", fontSize: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
-                {product.status === "available" ? "Add to Cart" : statusInfo.label}
+                −
               </button>
-            )}
-          </div>
+              <span style={{ fontSize: "24px", fontWeight: 600, color: "var(--text-main)", minWidth: "20px", textAlign: "center" }}>
+                {cartItem.quantity}
+              </span>
+              <button
+                onClick={handleIncrement}
+                style={{ width: "32px", height: "32px", borderRadius: "50%", border: "1px solid var(--border-soft)", background: "var(--bg-main)", color: "var(--text-main)", cursor: "pointer", fontSize: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                +
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleAddToCart}
+              disabled={product.status !== "available"}
+              className="btn btn-primary btn-sm"
+              style={{ fontSize: "14px", padding: "8px 16px" }}
+            >
+              {product.status === "available" ? "Add to Cart" : statusInfo.label}
+            </button>
+          )}
         </div>
-
       </div>
-    </Link>
+    </div>
   );
 }

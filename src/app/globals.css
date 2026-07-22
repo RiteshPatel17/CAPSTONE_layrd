@@ -642,6 +642,134 @@ select.input {
   min-width: 600px; /* ensure tables can scroll when wrapper is small */
 }
 
+/* ─── Shop Section Headings ─── */
+.shop-section-header {
+  margin-bottom: 24px;
+}
+.shop-section-heading {
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: 0.02em;
+  line-height: 120%;
+  margin: 0;
+}
+.shop-section-desc {
+  font-size: 16px;
+  color: var(--text-muted);
+  line-height: 160%;
+  margin-top: 8px;
+}
+
+/* ─── Shared Product Card System ─── */
+.product-card-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card-media {
+  height: 240px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-soft);
+}
+
+.product-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.card:hover .product-card-media img {
+  transform: scale(1.04);
+}
+
+.product-card-neutral {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--surface-muted) 0%, var(--bg-soft) 100%);
+}
+
+.product-card-body {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card-eyebrow {
+  font-size: 20px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.product-card-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 8px;
+  line-height: 120%;
+}
+
+.product-card-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 160%;
+}
+
+.product-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  gap: 12px;
+}
+
+.product-card-price {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--price-color);
+  letter-spacing: 0.02em;
+}
+
+/* ─── Specific Footer Layout for Bundles ─── */
+.bundle-card-footer {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.bundle-card-price {
+  min-width: 0;
+  white-space: nowrap;
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--price-color);
+  letter-spacing: 0.02em;
+}
+
+.bundle-card-action {
+  max-width: 100%;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+
 .table th {
   padding: 10px 16px;
   text-align: left;
@@ -990,3 +1118,94 @@ select.input {
     transform: rotate(360deg);
   }
 }
+/* --- Bundle Builder UI --- */
+.bundle-builder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .bundle-builder-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}
+@media (max-width: 350px) {
+  .bundle-builder-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bundle-builder-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s var(--ease);
+  height: 100%;
+}
+.bundle-builder-card:hover:not(.disabled) {
+  border-color: var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+[data-theme="night"] .bundle-builder-card:hover:not(.disabled) {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.bundle-builder-card.disabled {
+  opacity: 0.5;
+}
+.bundle-builder-card--selected {
+  border-color: var(--accent);
+}
+
+.bundle-builder-media {
+  height: 120px;
+  position: relative;
+  background: var(--bg-soft);
+}
+.bundle-builder-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bundle-builder-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.bundle-builder-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 4px;
+  line-height: 120%;
+}
+
+.bundle-builder-action {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+
+.bundle-sidebar {
+  position: sticky;
+  top: 100px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+@media (max-width: 900px) {
+  .bundle-sidebar {
+    position: static;
+  }
+}
+
