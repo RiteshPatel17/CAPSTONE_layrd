@@ -67,7 +67,7 @@ export default function WholesalePage() {
             <h2 style={{ fontSize: "48px", marginBottom: "30px", color: "var(--text-main)" }}>
               Who Qualifies?
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px" }}>
+            <div className="admin-card-grid-200" style={{ gap: "20px" }}>
               {["Licensed retailers", "Cafés & coffee shops", "Restaurants & bistros", "Food service operators", "Corporate & office catering"].map((item, i) => (
                 <div key={i} style={{ padding: "24px", background: "var(--surface)", border: "1px solid var(--border-soft)", borderRadius: "8px", fontSize: "24px", color: "var(--text-main)", fontWeight: 500 }}>
                   ✦ {item}

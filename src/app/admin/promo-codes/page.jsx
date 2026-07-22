@@ -155,7 +155,7 @@ export default function AdminPromoCodesPage() {
         <div style={{ background: "var(--surface)", border: "1px solid var(--border-soft)", borderRadius: "6px", padding: "28px 28px 24px", marginBottom: "24px" }}>
           <h3 style={{ margin: "0 0 20px", fontSize: "20px", fontWeight: 600, color: "var(--text-main)" }}>Create New Promo Code</h3>
           <form onSubmit={handleCreate}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "20px" }}>
+            <div className="responsive-grid-3" style={{ gap: "16px", marginBottom: "20px" }}>
 
               <Field label="Code *" hint="What customers type at checkout">
                 <input

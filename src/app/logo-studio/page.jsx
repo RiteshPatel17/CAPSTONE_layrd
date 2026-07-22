@@ -275,7 +275,7 @@ export default function AILabelStudioPage() {
                             ))}
                           </div>
                         </div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                        <div className="responsive-grid-2" style={{ gap: "16px" }}>
                           <div>
                             <label className="label">Select Approved Event</label>
                             <select

@@ -14,10 +14,10 @@ export default function Footer() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-            gap: "24px",
-            padding: "80px 0 40px",
-            maxWidth: "800px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: "clamp(32px, 5vw, 64px)",
+            padding: "clamp(60px, 8vw, 120px) 0 clamp(40px, 5vw, 60px)",
+            maxWidth: "960px",
             margin: "0 auto",
           }}
         >
@@ -56,12 +56,12 @@ export default function Footer() {
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
                 color: "var(--text-secondary)",
-                marginBottom: "16px",
+                marginBottom: "24px",
                 }}
             >
               Shop
             </h5>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
@@ -88,12 +88,12 @@ export default function Footer() {
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
                 color: "var(--text-secondary)",
-                marginBottom: "16px",
+                marginBottom: "24px",
                 }}
             >
               Contact
             </h5>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <a
                 href={`mailto:${BRAND.email}`}
                 style={{ fontSize: "16px", color: "var(--text-secondary)", transition: "color 0.2s" }}
@@ -131,12 +131,12 @@ export default function Footer() {
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
                 color: "var(--text-secondary)",
-                marginBottom: "16px",
+                marginBottom: "24px",
                 }}
             >
               Business
             </h5>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {[
                 { href: "/wholesale", label: "Wholesale" },
                 { href: "/business", label: "Business Account" },
@@ -178,7 +178,7 @@ export default function Footer() {
           <p style={{ fontSize: "16px", color: "var(--text-secondary)" }}>
             © {year} {BRAND.name}. All rights reserved. Calgary, AB.
           </p>
-          <div style={{ display: "flex", gap: "20px" }}>
+          <div className="flex-wrap" style={{ display: "flex", gap: "20px" }}>
             <Link
               href="/faq"
               style={{ fontSize: "16px", color: "var(--text-secondary)", transition: "color 0.2s" }}

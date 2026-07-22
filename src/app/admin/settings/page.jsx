@@ -111,7 +111,7 @@ export default function AdminSettingsPage() {
 
           {/* ── Store Contact ── */}
           <SettingSection title="Store Contact">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+            <div className="responsive-grid-2" style={{ gap: "16px" }}>
               <AdminFormField label="Store Email">
                 <input className="input" type="email"
                   value={settings.storeEmail}

@@ -77,7 +77,7 @@ export default function ProductDetailPage() {
           <span style={{ color: "var(--color-sand)" }}>{flavour?.name || product.name}</span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "64px", alignItems: "start" }}>
+        <div className="responsive-grid-2" style={{ gap: "64px", alignItems: "start" }}>
           {/* Image area */}
           <div
             style={{

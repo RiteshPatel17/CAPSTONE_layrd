@@ -30,34 +30,8 @@ export default function HomePage() {
         }}
       >
         {/* Decorative rings */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            width: "600px",
-            height: "600px",
-            border: "1px solid rgba(184,155,94,0.12)",
-            borderRadius: "50%",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            pointerEvents: "none",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            width: "900px",
-            height: "900px",
-            border: "1px solid rgba(184,155,94,0.06)",
-            borderRadius: "50%",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            pointerEvents: "none",
-          }}
-        />
+        <div className="hero-decorative-ring-1" aria-hidden="true" />
+        <div className="hero-decorative-ring-2" aria-hidden="true" />
 
         <div className="animate-fade-in" style={{ position: "relative", zIndex: 1 }}>
           {/* Pre-title */}
@@ -68,7 +42,7 @@ export default function HomePage() {
               textTransform: "uppercase",
               color: "var(--accent-primary)",
               marginBottom: "20px",
-              fontWeight: 500,
+              fontWeight: 600,
             }}
           >
             Calgary · Boutique Desserts
@@ -106,18 +80,19 @@ export default function HomePage() {
               letterSpacing: "0.1em",
               marginBottom: "48px",
               fontStyle: "italic",
+              fontWeight: 500,
             }}
           >
             {BRAND.tagline}
           </p>
 
           {/* CTA buttons */}
-          <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/shop">
-              <button className="btn btn-primary btn-lg" style={{ minWidth: "220px" }}>Shop Now</button>
+          <div className="hero-actions">
+            <Link href="/shop" className="btn btn-primary hero-action">
+              Shop Now
             </Link>
-            <Link href="/events">
-              <button className="btn btn-primary btn-lg" style={{ minWidth: "220px" }}>Private Events</button>
+            <Link href="/events" className="btn btn-outline hero-action">
+              Events
             </Link>
           </div>
         </div>
@@ -141,15 +116,15 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="product-grid">
+          <div className="homepage-product-grid">
             {featuredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
           <div style={{ textAlign: "center", marginTop: "40px" }}>
-            <Link href="/shop">
-              <button className="btn btn-outline">View All Flavours</button>
+            <Link href="/shop" className="btn btn-outline">
+              View All Flavours
             </Link>
           </div>
         </div>
@@ -159,10 +134,9 @@ export default function HomePage() {
       <section className="section">
         <div className="container">
           <div
+            className="responsive-grid-2"
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "64px",
+              gap: "32px",
               alignItems: "center",
             }}
           >
@@ -184,8 +158,8 @@ export default function HomePage() {
                 Made fresh in Calgary&apos;s Pineridge NE neighbourhood. Available for pickup and
                 Calgary-wide delivery.
               </p>
-              <Link href="/shop">
-                <button className="btn btn-primary">Explore the Shop</button>
+              <Link href="/shop" className="btn btn-primary">
+                Explore the Shop
               </Link>
             </div>
 
@@ -329,8 +303,8 @@ export default function HomePage() {
           <p style={{ maxWidth: "400px", margin: "0 auto 36px", fontSize: "20px" }}>
             Order online and enjoy premium desserts at home. Minimum 4 items for delivery.
           </p>
-          <Link href="/shop">
-            <button className="btn btn-primary btn-lg">Shop the Collection</button>
+          <Link href="/shop" className="btn btn-primary btn-lg">
+            Shop the Collection
           </Link>
         </div>
       </section>
