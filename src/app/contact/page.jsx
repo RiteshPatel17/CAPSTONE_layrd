@@ -42,7 +42,7 @@ export default function ContactPage() {
           <div className="divider-accent" style={{ margin: "0 auto" }} />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: "64px", alignItems: "start" }}>
+        <div className="responsive-grid-1-1-6" style={{ gap: "64px", alignItems: "start" }}>
           {/* Info */}
           <div>
             <h3 style={{ fontSize: "48px", marginBottom: "24px", color: "var(--text-main)", lineHeight: "120%" }}>
@@ -109,7 +109,7 @@ export default function ContactPage() {
             ) : (
               <div style={{ background: "var(--surface)", padding: "40px", borderRadius: "8px", border: "1px solid var(--border-soft)" }}>
                 <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                  <div className="responsive-grid-2" style={{ gap: "20px" }}>
                     <div>
                       <label className="label" style={{ fontSize: "20px", color: "var(--text-main)", fontWeight: 500 }}>Name *</label>
                       <input className="input" required placeholder="Jane Doe"

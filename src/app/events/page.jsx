@@ -155,7 +155,7 @@ export default function EventsPage() {
             <h2 style={{ fontSize: "48px", marginBottom: "30px", color: "var(--text-main)", textAlign: "center" }}>
               Event Pricing
             </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "15px", maxWidth: "600px", margin: "0 auto" }}>
+            <div className="responsive-grid-1-1-4" style={{ gap: "48px", alignItems: "start" }}>
               {TIERS.map((t, i) => (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", paddingBottom: "15px", borderBottom: "1px solid var(--border-soft)", fontSize: "24px" }}>
                   <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>{t.label}</span>

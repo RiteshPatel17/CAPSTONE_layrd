@@ -160,7 +160,7 @@ export default function AdminFaqPage() {
             </h2>
 
             <form onSubmit={handleSaveForm} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div className="responsive-grid-2" style={{ gap: "16px" }}>
                 <AdminFormField label="Category">
                   <input required className="input" placeholder="e.g. General, Shipping" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
                 </AdminFormField>

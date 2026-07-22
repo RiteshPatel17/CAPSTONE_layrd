@@ -194,7 +194,7 @@ export default function AdminProductsPage() {
 
             <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {/* Row 1 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div className="responsive-grid-2" style={{ gap: "16px" }}>
                 <AdminFormField label="Product Name" required>
                   <input
                     className="input" required
@@ -214,7 +214,7 @@ export default function AdminProductsPage() {
               </div>
 
               {/* Row 2 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "16px" }}>
+              <div className="responsive-grid-4" style={{ gap: "16px" }}>
                 <AdminFormField label="Category" required>
                   <select className="input" value={form.category} onChange={(e) => handleField("category", e.target.value)}>
                     {PRODUCT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -241,7 +241,7 @@ export default function AdminProductsPage() {
               </div>
 
               {/* Row 3 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div className="responsive-grid-2" style={{ gap: "16px" }}>
                 <AdminFormField label="Status" required>
                   <select className="input" value={form.status} onChange={(e) => handleField("status", e.target.value)}>
                     {PRODUCT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}

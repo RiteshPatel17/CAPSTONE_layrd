@@ -92,12 +92,7 @@ export default function AdminDashboard() {
     <AdminLayout title="Dashboard" subtitle="LÄYRD Admin Overview">
 
       {/* ── Stat cards ── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))",
-        gap: "14px",
-        marginBottom: "36px",
-      }}>
+      <div className="admin-card-grid-160" style={{ gap: "20px", marginBottom: "40px" }}>
         <StatCard label="Total Orders"     value={totalOrders}                sub="all time" />
         <StatCard label="Pending Payment"  value={pendingPayment}             sub="awaiting e-transfer" warn={pendingPayment > 0} />
         <StatCard label="Preparing"        value={preparing}                  sub="in progress" />

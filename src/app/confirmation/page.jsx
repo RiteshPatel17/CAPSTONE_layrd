@@ -40,7 +40,7 @@ function ConfirmationContent() {
       </p>
 
       {/* Info cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "40px", textAlign: "left" }}>
+      <div className="responsive-grid-2" style={{ gap: "16px", marginBottom: "40px", textAlign: "left" }}>
         {[
           {
             title: "Pickup Location",

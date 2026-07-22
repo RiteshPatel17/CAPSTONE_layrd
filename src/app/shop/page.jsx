@@ -1,192 +1,58 @@
 "use client";
 // ─────────────────────────────────────────────
-// LÄYRD – Shop page (/shop)
-// Product grid with category filters
+// LÄYRD – Product detail page (/shop/[id])
 // ─────────────────────────────────────────────
-import { useState, useEffect } from "react";
-import { PRODUCTS, ESPRESSO_PRODUCTS, BUNDLE_PRODUCTS } from "../../data/seed-products.js";
-import ProductCard from "../../components/products/ProductCard.jsx";
-import { useCart } from "../../components/cart/CartContext.jsx";
-import { formatPrice } from "../../lib/pricing.js";
-import toast from "react-hot-toast";
+import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useState } from "react";
+import { PRODUCTS, FLAVOURS, ESPRESSO_PRODUCTS } from "../../../data/seed-products.js";
+import { STORAGE_INFO } from "../../../lib/constants.js";
+import { useCart } from "../../../components/cart/CartContext.jsx";
+import { formatPrice } from "../../../lib/pricing.js";
+import toast from "react-hot-toast";
 
-const FILTERS = ["All", "Core Flavours", "Limited Flavours", "Bundles", "Espresso"];
-
-export default function ShopPage() {
-  const [activeFilter, setActiveFilter] = useState("All");
-  const { addItem, openCart } = useCart();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/products");
-        if (!res.ok) throw new Error("API or logic missing: Failed to fetch products");
-        const data = await res.json();
-        setProducts(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadProducts();
-  }, []);
-
-  // Filter products locally for the tabs
-  // Make sure to filter out items named "Espresso Shot" from the cake grid just in case they have wrong DB categories
-  let filteredProducts = products.filter(p => !p.name.toLowerCase().includes("espresso shot"));
-  if (activeFilter === "Core Flavours") filteredProducts = filteredProducts.filter((p) => p.category === "core");
-  else if (activeFilter === "Limited Flavours") filteredProducts = filteredProducts.filter((p) => p.category === "limited");
-  else if (activeFilter === "All") filteredProducts = filteredProducts.filter((p) => p.category !== "bundle");
-  else filteredProducts = [];
-
-  const showBundles = activeFilter === "All" || activeFilter === "Bundles";
-  const showEspresso = activeFilter === "All" || activeFilter === "Espresso";
-
-  return (
-    <div className="section">
-      <div className="container">
-        {/* Header */}
-        <div style={{ marginBottom: "48px" }}>
-          <p style={{ fontSize: "14px", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--color-accent)", marginBottom: "10px" }}>
-            LÄYRD Collection
-          </p>
-          <h1 style={{ marginBottom: "8px" }}>
-            The Shop
-          </h1>
-          <div className="divider-accent" />
-        </div>
-
-        {/* Filter tabs */}
-        <div className="hide-scrollbar" style={{ display: "flex", gap: "10px", flexWrap: "nowrap", overflowX: "auto", marginBottom: "40px", paddingBottom: "4px" }}>
-          {FILTERS.map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`tag ${activeFilter === filter ? "active" : ""}`}
-              style={{ flexShrink: 0 }}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
-
-        {/* Cans grid */}
-        {filteredProducts.length > 0 && (
-          <>
-            <h3
-              style={{
-                fontSize: "32px",
-                marginBottom: "24px",
-                color: "var(--color-cream)",
-              }}
-            >
-              {activeFilter === "All" ? "Cake in a Can · 250ml" : activeFilter}
-            </h3>
-            <div className="product-grid" style={{ marginBottom: "64px" }}>
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Bundles */}
-        {showBundles && (
-          <>
-            <h3 style={{ fontSize: "32px", marginBottom: "8px" }}>
-              Bundles
-            </h3>
-            <p style={{ fontSize: "16px", color: "var(--color-sand)", marginBottom: "24px" }}>
-              Mix and match any flavours. Add $1 per limited flavour included.
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "24px", marginBottom: "64px" }}>
-              {BUNDLE_PRODUCTS.map((bundle) => (
-                <BundleCard key={bundle.id} bundle={bundle} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Espresso */}
-        {showEspresso && (
-          <>
-            <h3 style={{ fontSize: "32px", marginBottom: "8px" }}>
-              Espresso Shots
-            </h3>
-            <p style={{ fontSize: "16px", color: "var(--color-sand)", marginBottom: "24px" }}>
-              Counts toward your 4-item delivery minimum. Choose your sweetness preference.
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "20px", marginBottom: "40px" }}>
-              {ESPRESSO_PRODUCTS.map((product) => (
-                <EspressoCard key={product.id} product={product} />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function BundleCard({ bundle }) {
-  return (
-    <div className="card" style={{ padding: "28px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-        <div>
-          <span className="badge badge-gold" style={{ marginBottom: "10px" }}>
-            {bundle.canCount} Cans
-          </span>
-          <h4
-            style={{
-              fontSize: "24px",
-              color: "var(--color-cream)",
-              marginTop: "8px",
-            }}
-          >
-            {bundle.name}
-          </h4>
-        </div>
-        <div style={{ fontSize: "32px", color: "var(--color-accent)" }}>
-          {formatPrice(bundle.basePrice)}
-        </div>
-      </div>
-      <p style={{ fontSize: "16px", color: "var(--color-sand)", marginBottom: "20px", lineHeight: "160%" }}>
-        {bundle.description}
-      </p>
-      <p style={{ fontSize: "16px", color: "var(--color-muted)", marginBottom: "20px" }}>
-        +$1 per limited flavour included
-      </p>
-      <a href={`/shop/bundle/${bundle.canCount}`}>
-        <button className="btn btn-primary" style={{ width: "100%" }}>
-          Customize Bundle
-        </button>
-      </a>
-    </div>
-  );
-}
-
-function EspressoCard({ product }) {
-  const { items, addItem, updateQuantity, openCart } = useCart();
+export default function ProductDetailPage() {
+  const params = useParams();
+  const { addItem } = useCart();
+  const [quantity, setQuantity] = useState(1);
   const [sweetness, setSweetness] = useState("Black");
+  const [added, setAdded] = useState(false);
 
-  const cartItemId = `${product.id}-${sweetness}`;
-  const cartItem = items.find((i) => i.id === cartItemId);
+  // Find product
+  const product = PRODUCTS.find((p) => p.id === params.id)
+    || ESPRESSO_PRODUCTS.find((p) => p.id === params.id);
 
-  function handleAdd(e) {
-    e.preventDefault();
+  if (!product) {
+    return (
+      <div className="section" style={{ textAlign: "center" }}>
+        <div className="container">
+          <h2>Product not found</h2>
+          <Link href="/shop">
+            <button className="btn btn-primary" style={{ marginTop: "24px" }}>Back to Shop</button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const flavour = product.flavourId
+    ? FLAVOURS.find((f) => f.id === product.flavourId)
+    : null;
+
+  const isEspresso = product.type === "espresso" || !!product.sweetness;
+  const isAvailable = product.status === "available" || isEspresso;
+
+  function handleAddToCart() {
+    if (!isAvailable) return;
     addItem({
-      id: cartItemId,
+      id: isEspresso ? `${product.id}-${sweetness}` : product.id,
       name: product.name,
+      flavourId: product.flavourId,
+      size: product.size,
       price: product.price,
-      type: "espresso",
-      quantity: 1,
-      sweetness,
+      type: isEspresso ? "espresso" : "can",
+      sweetness: isEspresso ? sweetness : undefined,
+      quantity,
     });
     toast.success("Added to cart", {
       style: {
@@ -197,102 +63,187 @@ function EspressoCard({ product }) {
     });
   }
 
-  function handleIncrement(e) {
-    e.preventDefault();
-    updateQuantity(cartItemId, (cartItem?.quantity || 0) + 1);
-  }
-
-  function handleDecrement(e) {
-    e.preventDefault();
-    updateQuantity(cartItemId, (cartItem?.quantity || 1) - 1);
-  }
+  const allergenColour = { dairy: "#c4a882", gluten: "#a88060", nuts: "#8faa6b", eggs: "#d4c57a", soy: "#a8a8a8" };
 
   return (
-    <Link href={`/shop/${product.id}`} style={{ textDecoration: "none" }}>
-      <div className="card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-        {/* Product Image */}
-        <div
-          style={{
-            height: "180px",
-            position: "relative",
-            overflow: "hidden",
-            background: "var(--bg-soft)",
-          }}
-        >
-          <img
-            src="/images/products/espresso.png"
-            alt={product.name}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center",
-              display: "block",
-              transition: "transform 0.4s ease",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.04)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-          />
+    <div className="section">
+      <div className="container">
+        {/* Breadcrumb */}
+        <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "40px", fontSize: "16px", color: "var(--color-muted)" }}>
+          <Link href="/" style={{ color: "var(--color-muted)" }}>Home</Link>
+          <span>/</span>
+          <Link href="/shop" style={{ color: "var(--color-muted)" }}>Shop</Link>
+          <span>/</span>
+          <span style={{ color: "var(--color-sand)" }}>{flavour?.name || product.name}</span>
         </div>
 
-        <div style={{ padding: "24px", flex: 1, display: "flex", flexDirection: "column" }}>
-          <h4
+        <div className="responsive-grid-2" style={{ gap: "64px", alignItems: "start" }}>
+          {/* Image area */}
+          <div
             style={{
-              fontSize: "24px",
-              color: "var(--color-cream)",
-              marginBottom: "4px",
+              background: flavour
+                ? `linear-gradient(135deg, ${flavour.colour}18 0%, ${flavour.colour}35 100%)`
+                : "var(--bg-card)",
+              border: "1px solid var(--border)",
+              borderRadius: "4px",
+              aspectRatio: "1",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "48px",
+              position: "sticky",
+              top: "calc(var(--nav-height) + 24px)",
             }}
           >
-            {product.name}
-          </h4>
-          <p style={{ fontSize: "24px", color: "var(--color-accent)", marginBottom: "16px" }}>
-            {formatPrice(product.price)}
-          </p>
-
-          {/* Sweetness selector */}
-          <div style={{ marginBottom: "16px", flex: 1 }}>
-            <label className="label">Sweetness</label>
-            <select
-              value={sweetness}
-              onClick={(e) => e.preventDefault()}
-              onChange={(e) => {
-                e.preventDefault();
-                setSweetness(e.target.value);
-              }}
-              className="input"
-              style={{ marginTop: "6px" }}
-            >
-              {product.sweetness.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+            {isEspresso ? "☕" : "🍰"}
           </div>
 
-          {cartItem ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "auto" }}>
-              <button
-                onClick={handleDecrement}
-                style={{ width: "32px", height: "32px", borderRadius: "50%", border: "1px solid var(--border-soft)", background: "var(--bg-main)", color: "var(--text-main)", cursor: "pointer", fontSize: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}
-              >
-                −
-              </button>
-              <span style={{ fontSize: "24px", fontWeight: 600, color: "var(--text-main)", minWidth: "20px", textAlign: "center", flex: 1 }}>
-                {cartItem.quantity}
+          {/* Details */}
+          <div>
+            {/* Category badge */}
+            {product.category && (
+              <span className={`badge ${product.category === "limited" ? "badge-gold" : "badge-gray"}`} style={{ marginBottom: "16px" }}>
+                {product.category === "limited" ? "Limited Edition" : "Core Flavour"}
               </span>
+            )}
+
+            {/* Name */}
+            <h1
+              style={{
+                fontSize: "48px", /* Simplified from redundant clamp */
+                lineHeight: "100%",
+                marginBottom: "8px",
+              }}
+            >
+              {flavour?.name || product.name}
+            </h1>
+
+            {product.size && (
+              <p style={{ fontSize: "16px", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-sand)", marginBottom: "16px" }}>
+                {product.size}ml · Handcrafted
+              </p>
+            )}
+
+            {/* Price */}
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
+              <span style={{ fontSize: "48px", color: "var(--price-color)", fontWeight: 600 }}>
+                {formatPrice(product.price)}
+              </span>
+              <span className={`badge ${isAvailable ? "badge-green" : "badge-red"}`}>
+                {isAvailable ? "In Stock" : product.status === "coming_soon" ? "Coming Soon" : "Sold Out"}
+              </span>
+            </div>
+
+            <div className="divider" style={{ margin: "0 0 24px" }} />
+
+            {/* Description */}
+            {flavour?.description && (
+              <p style={{ fontSize: "20px", lineHeight: "160%", marginBottom: "28px" }}>
+                {flavour.description}
+              </p>
+            )}
+
+            {/* Sweetness (espresso only) */}
+            {isEspresso && (
+              <div style={{ marginBottom: "24px" }}>
+                <label className="label">Sweetness Preference</label>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "10px" }}>
+                  {product.sweetness.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setSweetness(s)}
+                      className={`tag ${sweetness === s ? "active" : ""}`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quantity */}
+            <div style={{ marginBottom: "28px" }}>
+              <label className="label">Quantity</label>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "10px" }}>
+                <button
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  style={{
+                    width: "36px", height: "36px", border: "1px solid var(--border)",
+                    background: "none", color: "var(--color-cream)", cursor: "pointer",
+                    borderRadius: "2px", fontSize: "24px",
+                  }}
+                >−</button>
+                <span style={{ fontSize: "20px", color: "var(--color-cream)", minWidth: "32px", textAlign: "center" }}>
+                  {quantity}
+                </span>
+                <button
+                  onClick={() => setQuantity((q) => q + 1)}
+                  style={{
+                    width: "36px", height: "36px", border: "1px solid var(--border)",
+                    background: "none", color: "var(--color-cream)", cursor: "pointer",
+                    borderRadius: "2px", fontSize: "24px",
+                  }}
+                >+</button>
+              </div>
+            </div>
+
+            {/* Add to cart */}
+            <div style={{ display: "flex", gap: "12px", marginBottom: "32px" }}>
               <button
-                onClick={handleIncrement}
-                style={{ width: "32px", height: "32px", borderRadius: "50%", border: "1px solid var(--border-soft)", background: "var(--bg-main)", color: "var(--text-main)", cursor: "pointer", fontSize: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}
+                onClick={handleAddToCart}
+                disabled={!isAvailable}
+                className="btn btn-primary btn-lg"
+                style={{ flex: 1 }}
               >
-                +
+                {isAvailable ? "Add to Cart" : "Not Available"}
               </button>
             </div>
-          ) : (
-            <button onClick={handleAdd} className="btn btn-primary" style={{ width: "100%", marginTop: "auto" }}>
-              Add to Cart
-            </button>
-          )}
+
+            {/* Ingredients */}
+            {flavour?.ingredients && (
+              <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "4px", padding: "20px", marginBottom: "20px" }}>
+                <h5 style={{ fontSize: "14px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "8px" }}>
+                  Ingredients
+                </h5>
+                <p style={{ fontSize: "16px", color: "var(--color-sand)", lineHeight: "160%" }}>
+                  {flavour.ingredients}
+                </p>
+              </div>
+            )}
+
+            {/* Allergens */}
+            {flavour?.allergens?.length > 0 && (
+              <div style={{ marginBottom: "20px" }}>
+                <h5 style={{ fontSize: "14px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "8px" }}>
+                  Contains
+                </h5>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  {flavour.allergens.map((a) => (
+                    <span key={a} className="badge badge-gray">
+                      {a.charAt(0).toUpperCase() + a.slice(1)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Storage info */}
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: "20px" }}>
+              <h5 style={{ fontSize: "14px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "12px" }}>
+                Storage & Freshness
+              </h5>
+              {STORAGE_INFO.map((info, i) => (
+                <p key={i} style={{ fontSize: "16px", color: "var(--color-sand)", marginBottom: "6px" }}>
+                  ✦ {info}
+                </p>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-    </Link>
+
+
+
+    </div>
   );
 }

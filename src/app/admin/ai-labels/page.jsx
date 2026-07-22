@@ -248,10 +248,7 @@ export default function AdminAILabelsPage() {
                   </div>
 
                   {/* Details */}
-                  <div style={{
-                    display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
-                    gap: "12px", marginBottom: "16px",
-                  }}>
+                  <div className="responsive-grid-2" style={{ gap: "20px", marginBottom: "16px" }}>
                     {[
                       ["Event ID", s.eventId],
                       ["Event Type", s.eventType],

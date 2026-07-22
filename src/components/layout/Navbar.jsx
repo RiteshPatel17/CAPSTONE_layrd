@@ -77,32 +77,21 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <div className="container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="container">
+        <div className="navbar-inner">
         {/* Logo */}
-        <Link href="/" style={{ textDecoration: "none" }}>
-          <span
-            style={{
-              fontSize: "32px",
-              fontWeight: 700,
-              letterSpacing: "0.25em",
-              color: "var(--text-primary)",
-              textTransform: "uppercase",
-              userSelect: "none",
-            }}
-          >
-            {BRAND.name}
-          </span>
+        <Link href="/" className="navbar-brand" aria-label="LÄYRD home">
+          <img
+            src="/layrd-swirl.png"
+            alt=""
+            aria-hidden="true"
+            className="navbar-brand-symbol"
+          />
+          <span className="navbar-brand-wordmark">{BRAND.name}</span>
         </Link>
 
         {/* Desktop nav links */}
-        <div
-          style={{
-            display: "flex",
-            gap: "32px",
-            alignItems: "center",
-          }}
-          className="desktop-nav"
-        >
+        <div className="navbar-links">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -124,35 +113,38 @@ export default function Navbar() {
         </div>
 
         {/* Right: theme toggle + auth + cart */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        <div className="navbar-actions">
           {/* Theme toggle */}
-          <ThemeToggle />
+          <div className="hide-on-mobile">
+            <ThemeToggle />
+          </div>
 
           {/* User Auth */}
           {user ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div className="hide-on-mobile" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <Link
                 href="/profile"
+                aria-label="Open account"
+                title="Open account"
                 style={{
-                  fontSize: "16px",
-                  letterSpacing: "0.05em",
                   color: "var(--text-primary)",
-                  fontWeight: 500,
                   display: "flex",
                   alignItems: "center",
-                  gap: "6px",
+                  justifyContent: "center",
                   textDecoration: "none",
                   transition: "color 0.2s",
+                  width: "44px",
+                  height: "44px",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent-primary)")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
               >
-                <User size={15} strokeWidth={1.5} />
-                {user.profile?.full_name || user.email?.split("@")[0]}
+                <User size={24} strokeWidth={1.5} />
               </Link>
               <button
                 onClick={handleSignOut}
                 title="Sign Out"
+                aria-label="Sign Out"
                 style={{
                   background: "none",
                   border: "none",
@@ -160,32 +152,36 @@ export default function Navbar() {
                   color: "var(--text-secondary)",
                   display: "flex",
                   alignItems: "center",
+                  justifyContent: "center",
                   transition: "color 0.2s",
+                  width: "44px",
+                  height: "44px",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
               >
-                <LogOut size={15} strokeWidth={1.5} />
+                <LogOut size={24} strokeWidth={1.5} />
               </button>
             </div>
           ) : (
             <Link
               href="/login"
+              aria-label="Log in"
+              title="Log in"
+              className="hide-on-mobile"
               style={{
-                fontSize: "16px",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
                 color: "var(--text-secondary)",
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
+                justifyContent: "center",
                 transition: "color 0.2s",
+                width: "44px",
+                height: "44px",
               }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
             >
-              <User size={15} strokeWidth={1.5} />
-              <span className="login-label">Login</span>
+              <User size={24} strokeWidth={1.5} />
             </Link>
           )}
 
@@ -193,18 +189,21 @@ export default function Navbar() {
           <button
             onClick={openCart}
             aria-label="Open cart"
+            title="Open cart"
             suppressHydrationWarning
             style={{
               background: "var(--bg-card)",
               border: "1px solid var(--border)",
-              borderRadius: "20px",
+              borderRadius: "24px",
               cursor: "pointer",
               position: "relative",
               display: "flex",
               alignItems: "center",
+              justifyContent: "center",
               gap: "8px",
               color: "var(--text-primary)",
-              padding: "6px 14px",
+              padding: "8px 16px",
+              minHeight: "44px",
               transition: "all 0.2s ease",
               boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
             }}
@@ -217,8 +216,8 @@ export default function Navbar() {
               e.currentTarget.style.color = "var(--text-primary)";
             }}
           >
-            <ShoppingBag size={18} strokeWidth={1.5} />
-            <span style={{ fontSize: "16px", fontWeight: 500, letterSpacing: "0.05em" }}>Cart</span>
+            <ShoppingBag size={24} strokeWidth={1.5} />
+            <span className="cart-label" style={{ fontSize: "16px", fontWeight: 500, letterSpacing: "0.05em" }}>Cart</span>
 
             {/* Cart count badge */}
             {totalItems > 0 && (
@@ -254,14 +253,20 @@ export default function Navbar() {
               cursor: "pointer",
               color: "var(--text-primary)",
               display: "none",
-              padding: "4px",
+              padding: "10px",
+              width: "44px",
+              height: "44px",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             className="mobile-menu-btn"
             aria-label="Toggle menu"
+            title="Toggle menu"
           >
-            {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
+            {menuOpen ? <X size={24} strokeWidth={1.5} /> : <Menu size={24} strokeWidth={1.5} />}
           </button>
         </div>
+      </div>
       </div>
 
       {/* Mobile menu */}
@@ -282,6 +287,10 @@ export default function Navbar() {
             boxShadow: "0 8px 24px rgba(14,14,14,0.08)",
           }}
         >
+          <div style={{ paddingBottom: "16px", borderBottom: "1px solid var(--border-soft)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: "16px", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-secondary)" }}>Theme</span>
+            <ThemeToggle />
+          </div>
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}

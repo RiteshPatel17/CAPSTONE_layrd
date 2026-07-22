@@ -107,12 +107,14 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* ── Layout: table + detail panel ── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: selected ? "1fr 340px" : "1fr",
-        gap: "20px",
-        alignItems: "start",
-      }}>
+        <div
+          className={selected ? "responsive-grid-bundle" : ""}
+          style={{
+            display: "grid",
+            gap: "32px",
+            alignItems: "start",
+          }}
+        >
         {/* Table */}
         <div style={{
           background: "var(--bg-card)",
