@@ -266,12 +266,7 @@ export default function AdminInventoryPage() {
           )}
 
           {/* ── Summary cards ── */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-            gap: "14px",
-            marginBottom: "32px",
-          }}>
+          <div className="admin-card-grid-160" style={{ gap: "20px", marginBottom: "40px" }}>
             <SummaryCard label="Total Produced"  value={totalProduced}  sub="all batches" />
             <SummaryCard label="Committed"       value={totalCommitted} sub="orders in progress" />
             <SummaryCard label="Available Stock" value={totalAvailable} sub="ready to sell" accent />
@@ -407,7 +402,7 @@ export default function AdminInventoryPage() {
 
             <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {/* Row 1: flavour + size */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <div className="responsive-grid-2" style={{ gap: "14px" }}>
                 <AdminFormField label="Flavour" required>
                   <select className="input" value={form.flavour}
                     onChange={(e) => handleField("flavour", e.target.value)}>
@@ -423,7 +418,7 @@ export default function AdminInventoryPage() {
               </div>
 
               {/* Row 2: category + qty produced */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <div className="responsive-grid-2" style={{ gap: "14px" }}>
                 <AdminFormField label="Category" required>
                   <select className="input" value={form.category}
                     onChange={(e) => handleField("category", e.target.value)}>
@@ -440,7 +435,7 @@ export default function AdminInventoryPage() {
               </div>
 
               {/* Row 3: dates */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <div className="responsive-grid-2" style={{ gap: "14px" }}>
                 <AdminFormField label="Bake Date" required>
                   <input className="input" type="date" required
                     value={form.bakeDate}

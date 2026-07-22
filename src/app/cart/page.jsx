@@ -96,7 +96,7 @@ export default function CartPage() {
           </div>
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: "40px", alignItems: "start" }}>
+        <div className="responsive-grid-cart" style={{ gap: "40px", alignItems: "start" }}>
           {/* Item list */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {items.map((item) => (
@@ -184,18 +184,7 @@ export default function CartPage() {
 
 function CartRow({ item, onRemove, onUpdateQuantity }) {
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "64px 1fr auto",
-        gap: "20px",
-        alignItems: "center",
-        padding: "20px",
-        background: "var(--bg-card)",
-        border: "1px solid var(--border)",
-        borderRadius: "4px",
-      }}
-    >
+    <div className="cart-row-grid">
       {/* Image */}
       <div
         style={{
@@ -216,7 +205,7 @@ function CartRow({ item, onRemove, onUpdateQuantity }) {
         {item.size && <p style={{ fontSize: "16px", color: "var(--color-sand)" }}>{item.size}ml</p>}
 
         {/* Quantity controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginTop: "10px" }}>
           <button onClick={() => onUpdateQuantity(item.quantity - 1)} style={qBtnStyle}>−</button>
           <span style={{ fontSize: "20px", color: "var(--color-cream)", minWidth: "28px", textAlign: "center" }}>{item.quantity}</span>
           <button onClick={() => onUpdateQuantity(item.quantity + 1)} style={qBtnStyle}>+</button>
