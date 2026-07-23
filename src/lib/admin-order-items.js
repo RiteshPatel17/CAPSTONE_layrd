@@ -1,9 +1,10 @@
+"use server";
 // ─────────────────────────────────────────────
 // LÄYRD – admin-order-items.js
-// Service layer for order line items.
+// Server-side service layer for order line items.
 // Used to calculate committed inventory stock.
-//
-// Phase 8: All queries now hit Supabase `order_items` table.
+// Every function requires a valid admin access token as its first
+// argument — see requireAdmin() in admin-server-auth.js for why.
 //
 // Stock calculation rule:
 //   COMMITTED statuses = New | Paid | Pending Payment | Preparing |
@@ -11,53 +12,38 @@
 //   NOT committed = Cancelled | Refunded
 //   NOT committed = Event inquiries (until Adam approves them)
 // ─────────────────────────────────────────────
-import { supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
+import { requireAdmin } from "@/lib/admin-server-auth";
+import { COMMITTED_STATUSES } from "./order-items-options.js";
 
-// Statuses that commit (lock) inventory
-export const COMMITTED_STATUSES = [
-  "New",
-  "Paid",
-  "Pending Payment",
-  "Preparing",
-  "Ready for Pickup",
-  "Out for Delivery",
-  "Completed",
-];
-
-// Statuses that free up inventory
-export const EXCLUDED_STATUSES = ["Cancelled", "Refunded"];
-
-// ── Field mapping ──────────────────────────────
+// ── Field mapping ────────────────────────────
 // Maps a raw DB row (joined with orders) into the shape
 // that calculateStock() in admin-inventory.js expects.
+// Real schema: name, flavour, size (already plain text e.g. "250ml"),
+// category, unit_price — no product_name or size_ml columns exist.
 
 function dbToJs(row) {
   return {
     id:          row.id,
     orderId:     row.order_id,
-    // flavour + category added in Phase 8 SQL migration (Option A)
-    // Fall back to product_name if flavour column not yet populated
-    flavour:     row.flavour || row.product_name,
-    // size_ml is stored as integer (e.g. 250), calculateStock needs "250ml"
-    size:        row.size_ml ? `${row.size_ml}ml` : null,
+    flavour:     row.flavour || row.name,
+    size:        row.size || null,
     category:    row.category || "cake",
     quantity:    row.quantity,
-    // order status comes from the joined orders row
     orderStatus: row.orders?.status ?? null,
-    // extra fields for display purposes
-    productName: row.product_name,
-    sizeMl:      row.size_ml,
+    productName: row.name,
     unitPrice:   row.unit_price,
     sweetness:   row.sweetness ?? null,
   };
 }
 
-// ── Queries ────────────────────────────────────
+// ── Queries ───────────────────────────────────
 
-/**
- * Get all order items joined with their order's status.
- */
-export async function getOrderItems() {
+export async function getOrderItems(accessToken) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("order_items")
     .select("*, orders!inner(status)")
@@ -75,7 +61,11 @@ export async function getOrderItems() {
  * Filters in JS after fetching — PostgREST joined-column filtering
  * can be unreliable across versions.
  */
-export async function getCommittedItems() {
+export async function getCommittedItems(accessToken) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("order_items")
     .select("*, orders!inner(status)");
@@ -90,10 +80,11 @@ export async function getCommittedItems() {
     .map(dbToJs);
 }
 
-/**
- * Get all line items for a specific order.
- */
-export async function getItemsForOrder(orderId) {
+export async function getItemsForOrder(accessToken, orderId) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("order_items")
     .select("*, orders!inner(status)")

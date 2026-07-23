@@ -2,8 +2,11 @@
 // ─────────────────────────────────────────────
 // LÄYRD – admin-inventory.js
 // Server-side service layer for production batches.
+// Every function requires a valid admin access token as its first
+// argument — see requireAdmin() in admin-server-auth.js for why.
 // ─────────────────────────────────────────────
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { requireAdmin } from "@/lib/admin-server-auth";
 import { getCommittedItems } from "@/lib/admin-order-items";
 import { calculateStock } from "@/lib/inventory-options";
 
@@ -33,7 +36,10 @@ function jsToDb(batch) {
   };
 }
 
-export async function getBatches() {
+export async function getBatches(accessToken) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("inventory_batches")
@@ -47,7 +53,10 @@ export async function getBatches() {
   return (data ?? []).map(dbToJs);
 }
 
-export async function createBatch(batch) {
+export async function createBatch(accessToken, batch) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("inventory_batches")
@@ -62,7 +71,10 @@ export async function createBatch(batch) {
   return dbToJs(data);
 }
 
-export async function updateBatch(id, updates) {
+export async function updateBatch(accessToken, id, updates) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("inventory_batches")
@@ -78,7 +90,10 @@ export async function updateBatch(id, updates) {
   return dbToJs(data);
 }
 
-export async function deleteBatch(id) {
+export async function deleteBatch(accessToken, id) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
     .from("inventory_batches")
@@ -92,10 +107,13 @@ export async function deleteBatch(id) {
   return true;
 }
 
-export async function getCurrentStock() {
+export async function getCurrentStock(accessToken) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
   const [batches, orderItems] = await Promise.all([
-    getBatches(),
-    getCommittedItems(),
+    getBatches(accessToken),
+    getCommittedItems(accessToken),
   ]);
   return calculateStock(batches, orderItems);
 }
