@@ -15,13 +15,12 @@ import AdminFormField from "@/components/admin/AdminFormField";
 import ConfirmModal from "@/components/admin/ConfirmModal";
 import {
   getBatches, createBatch, updateBatch, deleteBatch,
+} from "@/lib/admin-inventory";
+import {
   calculateStock, BATCH_FLAVOURS, BATCH_SIZES, BATCH_CATEGORIES,
   STOCK_THRESHOLD_LOW,
-} from "@/lib/admin-inventory";
+} from "@/lib/inventory-options";
 import { getCommittedItems } from "@/lib/admin-order-items";
-
-// ── Helpers ──────────────────────────────────
-
 function stockBadge(status) {
   const map = {
     OK:  { bg: "rgba(74,222,128,0.1)",  color: "#4ade80",  border: "rgba(74,222,128,0.25)"  },
@@ -37,13 +36,48 @@ function stockBadge(status) {
       fontSize: "14px",
       fontWeight: 600,
       letterSpacing: "0.08em",
-      textTransform: "uppercase",
       background: s.bg,
       color: s.color,
       border: `1px solid ${s.border}`,
+      textTransform: "uppercase",
     }}>
       {status}
     </span>
+  );
+}
+// ── Helpers ──────────────────────────────────
+
+function expiryCell(expiryDate) {
+  if (!expiryDate) return "—";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiry = new Date(expiryDate);
+  const isExpired = expiry < today;
+
+  if (!isExpired) {
+    return <span style={{ color: "var(--color-muted)", fontSize: "16px" }}>{expiryDate}</span>;
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+      <span style={{ color: "var(--color-muted)", fontSize: "16px" }}>{expiryDate}</span>
+      <span style={{
+        display: "inline-block",
+        padding: "2px 10px",
+        borderRadius: "3px",
+        fontSize: "14px",
+        fontWeight: 600,
+        letterSpacing: "0.08em",
+        background: "rgba(239,68,68,0.1)",
+        color: "#f87171",
+        border: "1px solid rgba(239,68,68,0.25)",
+        textTransform: "uppercase",
+        width: "fit-content",
+      }}>
+        Expired
+      </span>
+    </div>
   );
 }
 
@@ -350,7 +384,7 @@ export default function AdminInventoryPage() {
                       <td style={{ color: "var(--color-muted)", textTransform: "capitalize" }}>{b.category}</td>
                       <td style={{ textAlign: "right" }}>{b.qtyProduced}</td>
                       <td style={{ color: "var(--color-sand)", fontSize: "16px" }}>{b.bakeDate}</td>
-                      <td style={{ color: "var(--color-muted)", fontSize: "16px" }}>{b.expiryDate}</td>
+                      <td>{expiryCell(b.expiryDate)}</td>
                       <td style={{ color: "var(--color-muted)", fontSize: "16px", maxWidth: "180px" }}>
                         {b.notes || "—"}
                       </td>
