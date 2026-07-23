@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase.js";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CORE_FLAVOURS, LIMITED_FLAVOURS, EVENT_MIN_CANS, EVENT_MIN_NOTICE_DAYS } from "../../lib/constants.js";
 import { FileText, CheckCircle2, CreditCard, Wand2, Truck } from "lucide-react";
@@ -14,6 +15,75 @@ const TIERS = [
   { label: "Deposit (on approval)", price: "50% non-refundable" },
   { label: "Minimum notice", price: `${EVENT_MIN_NOTICE_DAYS} business days` },
 ];
+
+const EVENT_STYLES = `
+  .events-page {
+    --events-section-gap: clamp(2.5rem, 5vw, 4.5rem);
+    --events-section-padding: clamp(2.5rem, 5vw, 4.5rem);
+    --events-heading-gap: clamp(1.25rem, 2vw, 2rem);
+  }
+  .events-section {
+    padding: var(--events-section-padding) 24px;
+    background: var(--bg-main);
+  }
+  .events-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--events-section-gap);
+  }
+  .events-heading {
+    font-size: 48px;
+    margin-bottom: var(--events-heading-gap);
+    color: var(--text-main);
+    text-align: center;
+  }
+  .events-pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: clamp(3rem, 7vw, 7rem);
+    row-gap: clamp(1.75rem, 3vw, 3rem);
+  }
+  @media (max-width: 768px) {
+    .events-pricing-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .events-pricing-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: clamp(1.5rem, 3vw, 3rem);
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 24px;
+  }
+  .events-pricing-value {
+    text-align: right;
+    font-weight: 700;
+  }
+`;
+
+function SafeEventImage({ src, alt, objectPosition = "center", sizes, priority = false }) {
+  if (src && src.trim() !== "") {
+    return (
+      <Image 
+        src={src} 
+        alt={alt} 
+        fill 
+        style={{ objectFit: "cover", objectPosition }} 
+        sizes={sizes} 
+        priority={priority} 
+      />
+    );
+  }
+  return (
+    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Image src="/layrd-swirl.png" alt="LÄYRD Logo" width={60} height={60} style={{ opacity: 0.1 }} />
+    </div>
+  );
+}
 
 export default function EventsPage() {
   const router = useRouter();
@@ -29,6 +99,10 @@ export default function EventsPage() {
 
   const formRef = useRef(null);
 
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [siteImages, setSiteImages] = useState({});
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -41,6 +115,13 @@ export default function EventsPage() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+  fetch("/api/site-images")
+    .then((res) => res.json())
+    .then(setSiteImages)
+    .catch((err) => console.error("Failed to load site images", err));
+}, []);
 
   const isLoggedIn = !!session;
 
@@ -87,28 +168,141 @@ export default function EventsPage() {
   const totalCans = (parseInt(form.coreCans) || 0) + (parseInt(form.limitedCans) || 0);
   const estimatedTotal = (parseInt(form.coreCans) || 0) * 5 + (parseInt(form.limitedCans) || 0) * 6;
 
+  const heroImage = siteImages.events_hero || null;
+  const safeOccasionImages = [
+  siteImages.events_birthday || null,
+  siteImages.events_wedding || null,
+  siteImages.events_corporate || null,
+  ];
+
   return (
-    <div>
-      {/* Hero (Reduced space) */}
-      <section style={{ padding: "40px 24px 20px", background: "var(--bg-main)", borderBottom: "1px solid var(--border-soft)", textAlign: "center" }}>
-        <div className="container" style={{ maxWidth: "800px" }}>
-          <span className="badge badge-gold" style={{ marginBottom: "12px" }}>Private Events</span>
-          <h1 style={{ marginBottom: "10px", fontSize: "48px", color: "var(--text-main)", lineHeight: "100%" }}>
-            Custom Catering for <em style={{ color: "var(--accent)", fontStyle: "italic" }}>Unforgettable</em> Occasions
-          </h1>
-          <p style={{ fontSize: "20px", maxWidth: "600px", margin: "10px auto 0", color: "var(--text-muted)" }}>
-            Personalized 150ml cake cans for every occasion.
-          </p>
+    <div className="events-page">
+      <style>{EVENT_STYLES}</style>
+      {/* Hero */}
+      <section className="events-section" style={{ borderBottom: "1px solid var(--border-soft)", textAlign: "center", position: "relative", overflow: "hidden" }}>
+        <div className="container" style={{ maxWidth: "1200px", display: "flex", flexDirection: "column", alignItems: "center", gap: "clamp(1.5rem, 4vw, 3rem)" }}>
+          
+          <div style={{ maxWidth: "800px" }}>
+            <h1 style={{ marginBottom: "var(--events-heading-gap)", fontSize: "56px", color: "var(--text-main)", lineHeight: "1.1" }}>
+              Custom Catering for <em style={{ color: "var(--accent)", fontStyle: "italic" }}>Unforgettable</em> Occasions
+            </h1>
+            <p style={{ fontSize: "24px", maxWidth: "600px", margin: "0 auto", color: "var(--text-muted)" }}>
+              Personalized 150ml cake cans for every occasion.
+            </p>
+          </div>
+
+          {/* Premium Hero Visual Frame */}
+          <div style={{
+            position: "relative",
+            width: "100%",
+            maxWidth: "600px",
+            aspectRatio: "4/3",
+            background: "var(--bg-soft)",
+            borderRadius: "24px",
+            padding: "20px",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+            transform: "perspective(1000px) rotateX(2deg)",
+            transition: "transform 0.5s ease",
+            cursor: "pointer"
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = "perspective(1000px) rotateX(0deg) scale(1.02)"}
+          onMouseOut={(e) => e.currentTarget.style.transform = "perspective(1000px) rotateX(2deg) scale(1)"}
+          >
+            {/* Decorative background shapes */}
+            <div style={{ position: "absolute", top: "-20px", left: "-20px", width: "100px", height: "100px", borderRadius: "50%", background: "var(--accent)", opacity: 0.1, zIndex: 0 }} />
+            <div style={{ position: "absolute", bottom: "-30px", right: "-30px", width: "150px", height: "150px", borderRadius: "50%", background: "var(--text-main)", opacity: 0.05, zIndex: 0 }} />
+            
+            <div style={{ position: "relative", width: "100%", height: "100%", borderRadius: "16px", overflow: "hidden", zIndex: 1, backgroundColor: "#f5f5f5" }}>
+               <SafeEventImage src={heroImage} alt="LÄYRD Cake Can Event Display" sizes="(max-width: 600px) 100vw, 600px" priority={true} />
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Main Content */}
-      <section style={{ padding: "60px 24px", background: "var(--bg-main)" }}>
-        <div className="container" style={{ maxWidth: "1000px", display: "flex", flexDirection: "column", gap: "80px" }}>
+      <section className="events-section">
+        <div className="events-container">
+
+          {/* Occasions Cards */}
+          <div>
+            <h2 className="events-heading">
+              Perfect For Any Occasion
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              
+              {/* Birthday */}
+              <div style={{ background: "#FDF6ED", borderRadius: "16px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column" }}>
+                <div style={{ position: "relative", width: "100%", height: "250px", backgroundColor: "#f0e6d2" }}>
+                  <SafeEventImage src={safeOccasionImages[0]} alt="Birthdays" objectPosition="center 60%" sizes="(max-width: 768px) 100vw, 33vw" />
+                </div>
+                <div style={{ padding: "30px", textAlign: "center" }}>
+                  <h3 style={{ fontSize: "28px", color: "#4A3B32", marginBottom: "10px" }}>Birthdays</h3>
+                  <p style={{ color: "#7A6859", fontSize: "16px" }}>Celebrate with a unique layered experience.</p>
+                </div>
+              </div>
+
+              {/* Weddings */}
+              <div style={{ background: "#F9F9F9", borderRadius: "16px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column" }}>
+                <div style={{ position: "relative", width: "100%", height: "250px", backgroundColor: "#eaeaea" }}>
+                  <SafeEventImage src={safeOccasionImages[1]} alt="Weddings" objectPosition="center 40%" sizes="(max-width: 768px) 100vw, 33vw" />
+                </div>
+                <div style={{ padding: "30px", textAlign: "center" }}>
+                  <h3 style={{ fontSize: "28px", color: "#333", marginBottom: "10px" }}>Weddings</h3>
+                  <p style={{ color: "#666", fontSize: "16px" }}>Elegant, individually portioned desserts.</p>
+                </div>
+              </div>
+
+              {/* Corporate */}
+              <div style={{ background: "#2C2C2C", borderRadius: "16px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column" }}>
+                <div style={{ position: "relative", width: "100%", height: "250px", backgroundColor: "#1a1a1a" }}>
+                  <SafeEventImage src={safeOccasionImages[2]} alt="Corporate Events" objectPosition="center 30%" sizes="(max-width: 768px) 100vw, 33vw" />
+                </div>
+                <div style={{ padding: "30px", textAlign: "center" }}>
+                  <h3 style={{ fontSize: "28px", color: "#F0F0F0", marginBottom: "10px" }}>Corporate</h3>
+                  <p style={{ color: "#A0A0A0", fontSize: "16px" }}>Premium branded gifting and catering.</p>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+
+          {/* Custom Label Preview */}
+          <div>
+            <h2 className="events-heading">
+              Personalize Your Event
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "30px" }}>
+              <p style={{ fontSize: "20px", color: "var(--text-muted)", textAlign: "center", maxWidth: "600px" }}>
+                Once your inquiry is approved, you gain access to the AI Label Studio to customize your jars.
+              </p>
+              
+              <div style={{ 
+                width: "280px", 
+                height: "280px", 
+                background: "#FFFFFF", 
+                borderRadius: "50%", 
+                boxShadow: "0 15px 35px rgba(0,0,0,0.1)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "20px",
+                border: "4px solid #F0F0F0"
+              }}>
+                <div style={{ marginBottom: "10px" }}>
+                  <Image src="/layrd-swirl.png" alt="LÄYRD Swirl" width={80} height={80} />
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <h4 style={{ fontFamily: "serif", fontSize: "24px", color: "#000", margin: "0 0 5px 0" }}>Your Event</h4>
+                  <p style={{ fontSize: "12px", color: "#666", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Custom Label Preview</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* 1. Flavours */}
-          <div style={{ padding: "20px 0" }}>
-            <h2 style={{ fontSize: "48px", marginBottom: "40px", color: "var(--text-main)", textAlign: "center" }}>
+          <div>
+            <h2 className="events-heading">
               Available Flavours
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 mt-8 max-w-[800px] mx-auto">
@@ -128,8 +322,8 @@ export default function EventsPage() {
           </div>
 
           {/* 2. How it works */}
-          <div style={{ padding: "20px 0", textAlign: "center" }}>
-            <h2 style={{ fontSize: "48px", marginBottom: "50px", color: "var(--text-main)" }}>
+          <div style={{ textAlign: "center" }}>
+            <h2 className="events-heading">
               How It Works
             </h2>
             <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", flexWrap: "wrap", gap: "20px" }}>
@@ -151,15 +345,15 @@ export default function EventsPage() {
           </div>
 
           {/* 3. Pricing */}
-          <div style={{ background: "var(--bg-soft)", padding: "50px", borderRadius: "8px", border: "1px solid var(--border-soft)", maxWidth: "800px", margin: "0 auto", width: "100%" }}>
-            <h2 style={{ fontSize: "48px", marginBottom: "30px", color: "var(--text-main)", textAlign: "center" }}>
+          <div style={{ background: "var(--bg-soft)", padding: "var(--events-section-padding)", borderRadius: "8px", border: "1px solid var(--border-soft)", maxWidth: "1000px", margin: "0 auto", width: "100%" }}>
+            <h2 className="events-heading">
               Event Pricing
             </h2>
-            <div className="responsive-grid-1-1-4" style={{ gap: "48px", alignItems: "start" }}>
+            <div className="events-pricing-grid">
               {TIERS.map((t, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", paddingBottom: "15px", borderBottom: "1px solid var(--border-soft)", fontSize: "24px" }}>
+                <div key={i} className="events-pricing-item">
                   <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>{t.label}</span>
-                  <span style={{ color: "var(--text-main)", fontWeight: 600 }}>{t.price}</span>
+                  <span className="events-pricing-value" style={{ color: "var(--text-main)" }}>{t.price}</span>
                 </div>
               ))}
             </div>
@@ -194,9 +388,9 @@ export default function EventsPage() {
 
           {/* Inquiry Form */}
           {showForm && !submitted && (
-            <div ref={formRef} style={{ background: "var(--surface)", padding: "60px", borderRadius: "8px", border: "1px solid var(--border-soft)", maxWidth: "800px", margin: "0 auto", width: "100%" }}>
+            <div ref={formRef} style={{ background: "var(--surface)", padding: "var(--events-section-padding)", borderRadius: "8px", border: "1px solid var(--border-soft)", maxWidth: "800px", margin: "0 auto", width: "100%" }}>
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-                <div style={{ textAlign: "center", marginBottom: "20px" }}>
+                <div style={{ textAlign: "center", marginBottom: "var(--events-heading-gap)" }}>
                   <h3 style={{ fontSize: "48px", marginBottom: "10px", color: "var(--text-main)" }}>
                     Submit Inquiry
                   </h3>
@@ -271,7 +465,7 @@ export default function EventsPage() {
           )}
 
           {submitted && (
-            <div style={{ padding: "60px 40px", textAlign: "center", background: "var(--bg-soft)", border: "1px solid #4ade80", borderRadius: "8px", marginTop: "20px" }}>
+            <div style={{ padding: "var(--events-section-padding)", textAlign: "center", background: "var(--bg-soft)", border: "1px solid #4ade80", borderRadius: "8px" }}>
               <div style={{ fontSize: "48px", marginBottom: "20px", color: "#4ade80" }}>✓</div>
               <h3 style={{ fontSize: "48px", marginBottom: "15px", color: "var(--text-main)" }}>Inquiry Submitted!</h3>
               <p style={{ fontSize: "24px", color: "var(--text-muted)" }}>LÄYRD will review your request and get back to you within 24 hours.</p>

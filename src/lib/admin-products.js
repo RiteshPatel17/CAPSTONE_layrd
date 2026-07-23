@@ -1,153 +1,174 @@
+"use server";
 // ─────────────────────────────────────────────
 // LÄYRD – admin-products.js
-// Service layer for Products admin.
-// Uses Supabase for CRUD operations.
+// Server-side service layer for Products admin.
+// Matches the REAL live Supabase schema (verified via information_schema):
+//   id (text), category = 'cake'|'espresso'|'bundle', flavour_type = 'core'|'limited'
+//   size = plain text (e.g. "250ml"), status = exact case, allergens = plain text
+//   featured = boolean, max 4 featured at once
 // ─────────────────────────────────────────────
-import { supabase } from "./supabase.js";
-import { mapProduct } from "./product-mapper.js";
+import { getSupabaseAdmin } from "./supabase.js";
 
-/**
- * Get all products.
- */
+const MAX_FEATURED = 4;
+
+function generateProductId(name) {
+  const slug = (name || "product")
+    .toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  const suffix = Date.now().toString(36).slice(-5);
+  return `${slug}-${suffix}`;
+}
+
 export async function getProducts() {
-  const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("products").select("*").order("created_at", { ascending: false });
+
   if (error) {
     console.error("[Admin Products] Error fetching products:", error);
-    throw new Error("API or logic missing: Supabase products query failed");
-  }
-  
-  if (!data || data.length === 0) {
-    // Fallback: If DB is empty, return one mock product for testing as requested
-    return [{
-      id: "mock-product-1",
-      flavourId: "mock-product-1",
-      name: "MOCK PRODUCT",
-      flavour: "Mock Flavour",
-      category: "core",
-      dbCategory: "cake",
-      size: "250ml",
-      price: 8,
-      status: "Available",
-      description: "This is a mock product generated because the database currently has no products.",
-      ingredients: "Mock ingredients",
-      allergens: ["None"],
-      image: null,
-      releaseDate: null,
-    }];
+    throw new Error(`Failed to fetch products: ${error.message}`);
   }
 
-  // Use the same mapper we use on the frontend, or simple mapping
-  // We'll map slightly to match what admin expects
-  return data.map(p => ({
+  return (data || []).map((p) => ({
     id: p.id,
     name: p.name,
-    category: p.category, // cake / espresso
-    flavour: p.flavour_id, // we'll use flavour_id for flavour
-    flavourType: p.category === 'cake' ? p.category : 'core', // simplified
-    size: p.size_ml ? `${p.size_ml}ml` : "250ml",
+    category: p.category,
+    flavour: p.flavour,
+    flavourType: p.flavour_type,
+    size: p.size,
     price: parseFloat(p.price),
     description: p.description,
     ingredients: p.ingredients,
-    allergens: p.allergens ? p.allergens.join(", ") : "",
-    status: p.status === 'sold_out' ? 'Sold Out' : p.status === 'coming_soon' ? 'Coming Soon' : p.status === 'hidden' ? 'Hidden' : 'Available',
-    releaseDate: p.drop_date,
+    allergens: p.allergens || "",
+    status: p.status,
+    releaseDate: p.release_date,
     image: p.image_url,
+    featured: p.featured ?? false,
   }));
 }
 
-/**
- * Helper to upload image via API
- */
 async function uploadImage(file) {
   if (!file) return null;
-  const formData = new FormData();
-  formData.append("file", file);
+  const supabase = getSupabaseAdmin();
+  const ext = file.name.split(".").pop();
+  const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${ext}`;
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
 
-  const res = await fetch("/api/admin/upload-product-image", {
-    method: "POST",
-    body: formData,
-  });
-  
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to upload image");
-  return data.url;
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from("product-images")
+    .upload(filename, buffer, { contentType: file.type, upsert: false });
+
+  if (uploadError) {
+    console.error("[Admin Products] Image upload failed:", uploadError);
+    throw new Error(`Failed to upload product image: ${uploadError.message}`);
+  }
+
+  const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(uploadData.path);
+  return publicUrl;
 }
 
-/**
- * Create a new product.
- */
+async function getFeaturedCount(supabase, excludeId = null) {
+  let query = supabase.from("products").select("id", { count: "exact", head: true }).eq("featured", true);
+  if (excludeId) query = query.neq("id", excludeId);
+  const { count, error } = await query;
+  if (error) {
+    console.error("[Admin Products] Error counting featured products:", error);
+    return 0;
+  }
+  return count ?? 0;
+}
+
 export async function createProduct(product) {
-  // Map admin object to DB shape
+  const supabase = getSupabaseAdmin();
+
+  if (product.featured) {
+    const count = await getFeaturedCount(supabase);
+    if (count >= MAX_FEATURED) {
+      throw new Error(`Only ${MAX_FEATURED} products can be featured on the homepage at once. Unfeature one first.`);
+    }
+  }
+
   const newProduct = {
+    id: generateProductId(product.name),
     name: product.name,
-    flavour_id: product.flavour || product.name,
-    size_ml: parseInt(product.size) || 250,
-    category: product.category === 'espresso' ? 'espresso' : 'cake',
+    category: product.category,
+    flavour: product.flavour || product.name,
+    flavour_type: product.flavourType,
+    size: product.size,
     price: parseFloat(product.price),
-    status: product.status === 'Sold Out' ? 'sold_out' : product.status === 'Coming Soon' ? 'coming_soon' : product.status === 'Hidden' ? 'hidden' : 'available',
-    description: product.description,
-    ingredients: product.ingredients,
-    allergens: product.allergens ? product.allergens.split(',').map(s => s.trim()) : [],
+    status: product.status,
+    description: product.description || null,
+    ingredients: product.ingredients || null,
+    allergens: product.allergens || null,
+    featured: !!product.featured,
+    release_date: product.status === "Coming Soon" && product.releaseDate ? product.releaseDate : null,
   };
 
   if (product.image instanceof File) {
     newProduct.image_url = await uploadImage(product.image);
-  } else if (typeof product.image === 'string' && product.image.trim()) {
+  } else if (typeof product.image === "string" && product.image.trim()) {
     newProduct.image_url = product.image;
   }
 
-  const { data, error } = await supabase.from('products').insert(newProduct).select().single();
+  const { data, error } = await supabase.from("products").insert(newProduct).select().single();
   if (error) {
     console.error("[Admin Products] Error creating product:", error);
-    throw new Error("API or logic missing: Failed to create product in Supabase");
+    throw new Error(`Failed to create product: ${error.message}`);
   }
   return data;
 }
 
-/**
- * Update an existing product by id.
- */
 export async function updateProduct(id, updates) {
-  // Try to map fields correctly
+  const supabase = getSupabaseAdmin();
   const dbUpdates = {};
+
   if (updates.name !== undefined) dbUpdates.name = updates.name;
-  if (updates.flavour !== undefined) dbUpdates.flavour_id = updates.flavour;
+  if (updates.category !== undefined) dbUpdates.category = updates.category;
+  if (updates.flavour !== undefined) dbUpdates.flavour = updates.flavour;
+  if (updates.flavourType !== undefined) dbUpdates.flavour_type = updates.flavourType;
+  if (updates.size !== undefined) dbUpdates.size = updates.size;
   if (updates.price !== undefined) dbUpdates.price = parseFloat(updates.price);
+  if (updates.status !== undefined) dbUpdates.status = updates.status;
   if (updates.description !== undefined) dbUpdates.description = updates.description;
-  if (updates.status !== undefined) {
-    dbUpdates.status = updates.status === 'Sold Out' ? 'sold_out' : updates.status === 'Coming Soon' ? 'coming_soon' : updates.status === 'Hidden' ? 'hidden' : 'available';
+  if (updates.ingredients !== undefined) dbUpdates.ingredients = updates.ingredients;
+  if (updates.allergens !== undefined) dbUpdates.allergens = updates.allergens;
+  if (updates.releaseDate !== undefined) dbUpdates.release_date = updates.releaseDate || null;
+
+  if (updates.featured !== undefined) {
+    if (updates.featured === true) {
+      const count = await getFeaturedCount(supabase, id);
+      if (count >= MAX_FEATURED) {
+        throw new Error(`Only ${MAX_FEATURED} products can be featured on the homepage at once. Unfeature one first.`);
+      }
+    }
+    dbUpdates.featured = updates.featured;
   }
-  
+
   if (updates.image instanceof File) {
     dbUpdates.image_url = await uploadImage(updates.image);
-  } else if (typeof updates.image === 'string' && updates.image.trim()) {
+  } else if (typeof updates.image === "string" && updates.image.trim()) {
     dbUpdates.image_url = updates.image;
   }
 
-  const { data, error } = await supabase.from('products').update(dbUpdates).eq('id', id).select().single();
+  const { data, error } = await supabase.from("products").update(dbUpdates).eq("id", id).select().single();
   if (error) {
     console.error("[Admin Products] Error updating product:", error);
-    throw new Error("API or logic missing: Failed to update product in Supabase");
+    throw new Error(`Failed to update product: ${error.message}`);
   }
   return data;
 }
 
-/**
- * Delete a product by id.
- */
-export async function deleteProduct(id) {
-  // if it's the mock product, just ignore
-  if (id === 'mock-product-1') return;
-
-  const { error } = await supabase.from('products').delete().eq('id', id);
-  if (error) {
-    console.error("[Admin Products] Error deleting product:", error);
-    throw new Error("API or logic missing: Failed to delete product from Supabase");
-  }
+export async function toggleFeatured(id, featured) {
+  return updateProduct(id, { featured });
 }
 
-// Product field options
-export const PRODUCT_CATEGORIES = ["cake", "espresso", "bundle"];
-export const FLAVOUR_TYPES = ["core", "limited"];
-export const PRODUCT_SIZES = ["150ml", "250ml", "330ml"];
-export const PRODUCT_STATUSES = ["Available", "Sold Out", "Coming Soon", "Hidden"];
+export async function deleteProduct(id) {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) {
+    console.error("[Admin Products] Error deleting product:", error);
+    throw new Error(`Failed to delete product: ${error.message}`);
+  }
+}

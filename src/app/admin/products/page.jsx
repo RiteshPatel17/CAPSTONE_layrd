@@ -1,8 +1,7 @@
 "use client";
 // ─────────────────────────────────────────────
 // LÄYRD – Admin Products (/admin/products)
-// Full CRUD table with add/edit/delete modals.
-// Data comes from src/lib/admin-products.js (mock → replace with Supabase).
+// Full CRUD table with add/edit/delete modals + featured toggle.
 // ─────────────────────────────────────────────
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -12,11 +11,12 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import ConfirmModal from "@/components/admin/ConfirmModal";
 import AdminFormField from "@/components/admin/AdminFormField";
 import {
-  getProducts, createProduct, updateProduct, deleteProduct,
-  PRODUCT_CATEGORIES, FLAVOUR_TYPES, PRODUCT_SIZES, PRODUCT_STATUSES,
+  getProducts, createProduct, updateProduct, deleteProduct, toggleFeatured,
 } from "@/lib/admin-products";
+import {
+  PRODUCT_CATEGORIES, FLAVOUR_TYPES, PRODUCT_SIZES, PRODUCT_STATUSES,
+} from "@/lib/product-options";
 
-// Empty form template
 const EMPTY_FORM = {
   name: "",
   category: "cake",
@@ -30,6 +30,7 @@ const EMPTY_FORM = {
   status: "Available",
   releaseDate: "",
   image: null,
+  featured: false,
 };
 
 export default function AdminProductsPage() {
@@ -37,13 +38,12 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editTarget, setEditTarget] = useState(null); // null = add mode, object = edit mode
+  const [editTarget, setEditTarget] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // ── Init ────────────────────────────────
   async function loadProducts() {
     try {
       setLoading(true);
@@ -59,6 +59,7 @@ export default function AdminProductsPage() {
   useEffect(() => {
     loadProducts();
   }, []);
+
   function openAdd() {
     setForm(EMPTY_FORM);
     setEditTarget(null);
@@ -107,15 +108,35 @@ export default function AdminProductsPage() {
       await loadProducts();
       setDeleteTarget(null);
     } catch (err) {
-      setError(err.message);
+      if (err.message.includes("order_items") || err.message.includes("foreign key")) {
+        alert(
+          `Can't delete "${deleteTarget.name}" — it's referenced by existing orders. ` +
+          `To remove it from the shop while keeping order history intact, edit the product ` +
+          `and set its Status to "Hidden" instead.`
+        );
+      } else {
+        alert(`Failed to delete product: ${err.message}`);
+      }
+      setDeleteTarget(null);
     }
   }
+
+  async function handleToggleFeatured(product) {
+    try {
+      await toggleFeatured(product.id, !product.featured);
+      await loadProducts();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  const featuredCount = products.filter((p) => p.featured).length;
 
   return (
     <AdminLayout>
       <AdminPageHeader
         title="Products"
-        subtitle={`${products.length} products in catalogue`}
+        subtitle={`${products.length} products in catalogue · ${featuredCount}/4 featured on homepage`}
         action={
           <button className="btn btn-primary btn-sm" onClick={openAdd}>
             + Add Product
@@ -138,7 +159,7 @@ export default function AdminProductsPage() {
       )}
 
       <AdminTable
-        headers={["Name", "Category", "Flavour Type", "Size", "Price", "Status", "Actions"]}
+        headers={["Name", "Category", "Flavour Type", "Size", "Price", "Status", "Featured", "Actions"]}
         emptyMessage="No products yet. Click + Add Product to get started."
       >
         {products.map((p) => (
@@ -149,6 +170,16 @@ export default function AdminProductsPage() {
             <td>{p.size}</td>
             <td style={{ color: "var(--color-accent)" }}>${p.price}</td>
             <td><StatusBadge status={p.status} /></td>
+            <td>
+              <button
+                onClick={() => handleToggleFeatured(p)}
+                className="btn btn-ghost btn-sm"
+                style={{ fontSize: "18px", padding: "4px 8px", color: p.featured ? "var(--color-accent)" : "var(--color-muted)" }}
+                title={p.featured ? "Remove from homepage" : "Feature on homepage"}
+              >
+                {p.featured ? "★" : "☆"}
+              </button>
+            </td>
             <td>
               <div style={{ display: "flex", gap: "8px" }}>
                 <button className="btn btn-ghost btn-sm" style={{ padding: "4px 12px" }} onClick={() => openEdit(p)}>
@@ -163,7 +194,6 @@ export default function AdminProductsPage() {
         ))}
       </AdminTable>
 
-      {/* ── Add / Edit Modal ── */}
       {showForm && (
         <div className="overlay" onClick={closeForm}>
           <div
@@ -193,7 +223,6 @@ export default function AdminProductsPage() {
             </div>
 
             <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              {/* Row 1 */}
               <div className="responsive-grid-2" style={{ gap: "16px" }}>
                 <AdminFormField label="Product Name" required>
                   <input
@@ -213,7 +242,6 @@ export default function AdminProductsPage() {
                 </AdminFormField>
               </div>
 
-              {/* Row 2 */}
               <div className="responsive-grid-4" style={{ gap: "16px" }}>
                 <AdminFormField label="Category" required>
                   <select className="input" value={form.category} onChange={(e) => handleField("category", e.target.value)}>
@@ -240,7 +268,6 @@ export default function AdminProductsPage() {
                 </AdminFormField>
               </div>
 
-              {/* Row 3 */}
               <div className="responsive-grid-2" style={{ gap: "16px" }}>
                 <AdminFormField label="Status" required>
                   <select className="input" value={form.status} onChange={(e) => handleField("status", e.target.value)}>
@@ -251,48 +278,57 @@ export default function AdminProductsPage() {
                   <AdminFormField label="Release Date" hint="Shown on Coming Soon products">
                     <input
                       className="input" type="date"
-                      value={form.releaseDate}
+                      value={form.releaseDate || ""}
                       onChange={(e) => handleField("releaseDate", e.target.value)}
                     />
                   </AdminFormField>
                 )}
               </div>
 
-              {/* Description */}
+              <AdminFormField label="Homepage Feature" hint="Show this product in the homepage's featured section (max 4 at a time).">
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={!!form.featured}
+                    onChange={(e) => handleField("featured", e.target.checked)}
+                  />
+                  <span style={{ fontSize: "16px" }}>
+                    {form.featured ? "★ Featured on homepage" : "☆ Not featured"}
+                  </span>
+                </label>
+              </AdminFormField>
+
               <AdminFormField label="Description">
                 <textarea
                   className="input"
                   rows={3}
-                  value={form.description}
+                  value={form.description || ""}
                   placeholder="Short product description shown on the shop page..."
                   onChange={(e) => handleField("description", e.target.value)}
                   style={{ resize: "vertical" }}
                 />
               </AdminFormField>
 
-              {/* Ingredients */}
               <AdminFormField label="Ingredients">
                 <textarea
                   className="input"
                   rows={2}
-                  value={form.ingredients}
+                  value={form.ingredients || ""}
                   placeholder="Comma-separated ingredient list..."
                   onChange={(e) => handleField("ingredients", e.target.value)}
                   style={{ resize: "vertical" }}
                 />
               </AdminFormField>
 
-              {/* Allergens */}
               <AdminFormField label="Allergens" hint="e.g. Dairy, Gluten, Nuts, Eggs, Soy">
                 <input
                   className="input"
-                  value={form.allergens}
+                  value={form.allergens || ""}
                   placeholder="Dairy, Gluten, Soy"
                   onChange={(e) => handleField("allergens", e.target.value)}
                 />
               </AdminFormField>
 
-              {/* Image Upload */}
               <AdminFormField label="Product Image" hint="Upload a high-quality photo of the product.">
                 <input
                   type="file"
@@ -308,7 +344,6 @@ export default function AdminProductsPage() {
                 )}
               </AdminFormField>
 
-              {/* Actions */}
               <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", paddingTop: "8px" }}>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={closeForm} disabled={saving}>Cancel</button>
                 <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>
@@ -320,7 +355,6 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {/* ── Delete Confirm Modal ── */}
       <ConfirmModal
         open={!!deleteTarget}
         title="Delete Product"

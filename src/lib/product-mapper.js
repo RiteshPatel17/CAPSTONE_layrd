@@ -33,6 +33,7 @@ export function mapProduct(row) {
     image:       row.image_url ?? null,                // legacy compat
     releaseDate: row.release_date ?? null,
     createdAt:   row.created_at,
+    featured:    row.featured ?? false,
   };
 }
 

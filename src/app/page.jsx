@@ -2,15 +2,34 @@
 // ─────────────────────────────────────────────
 // LÄYRD – Homepage
 // Hero + featured products + brand story
+// Featured products fetched live from Supabase via /api/products,
+// filtered to admin-marked "featured" items (max 4), centered layout.
 // ─────────────────────────────────────────────
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Truck, MapPin, CalendarDays, Store, AlertTriangle } from "lucide-react";
-import { PRODUCTS } from "../data/seed-products.js";
 import { BRAND, STORAGE_INFO } from "../lib/constants.js";
 import ProductCard from "../components/products/ProductCard.jsx";
 
 export default function HomePage() {
-  const featuredProducts = PRODUCTS.filter((p) => p.status === "available").slice(0, 3);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+
+  useEffect(() => {
+    async function loadFeatured() {
+      try {
+        const res = await fetch("/api/products");
+        const data = await res.json();
+        const featured = data
+          .filter((p) => p.featured === true && p.status === "available")
+          .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+          .slice(0, 4);
+        setFeaturedProducts(featured);
+      } catch (err) {
+        console.error("[Homepage] Failed to load featured products:", err);
+      }
+    }
+    loadFeatured();
+  }, []);
 
   return (
     <>
@@ -101,7 +120,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Featured Products ─── */}
-      <section className="section" style={{ background: "var(--bg-secondary)" }}>
+      <section className="section" style={{ background:"var(--bg-secondary)" }}>
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
             <p style={{ fontSize: "14px", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-primary)", marginBottom: "12px" }}>
@@ -122,7 +141,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div style={{ textAlign: "center", marginTop: "40px" }}>
+          <div style={{ textAlign: "center", marginTop:"40px" }}>
             <Link href="/shop" className="btn btn-outline">
               View All Flavours
             </Link>
@@ -238,7 +257,7 @@ export default function HomePage() {
             }}
           >
             {[
-              { Icon: Truck, title: "Calgary Delivery", text: "Fast delivery across Calgary from $5" },
+              { Icon: Truck, title: "Calgary Delivery",text: "Fast delivery across Calgary from $5" },
               { Icon: MapPin, title: "Pickup Available", text: "Order online, collect in Pineridge NE" },
               { Icon: CalendarDays, title: "Private Events", text: "Custom orders with AI-designed labels" },
               { Icon: Store, title: "Wholesale", text: "Trade pricing for retailers & food service" },
@@ -303,7 +322,7 @@ export default function HomePage() {
           <p style={{ maxWidth: "400px", margin: "0 auto 36px", fontSize: "20px" }}>
             Order online and enjoy premium desserts at home. Minimum 4 items for delivery.
           </p>
-          <Link href="/shop" className="btn btn-primary btn-lg">
+          <Link href="/shop" className="btn btn-primarybtn-lg">
             Shop the Collection
           </Link>
         </div>
