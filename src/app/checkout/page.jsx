@@ -119,7 +119,7 @@ export default function CheckoutPage() {
     }
   };
 
-  const { discount, gst, total, subtotal } = getCartTotals(items, deliveryFee, promoCode);
+  const { discount, gst, total, subtotal } = getCartTotals(items, deliveryFee, promoCode, settings?.gstRate != null ? settings.gstRate / 100 : undefined);
 
   async function handlePlaceOrder(e) {
     e.preventDefault();
@@ -450,7 +450,7 @@ export default function CheckoutPage() {
                   <SumRow label="Subtotal" value={formatPrice(subtotal)} />
                   {discount > 0 && <SumRow label="Promo" value={`-${formatPrice(discount)}`} green />}
                   <SumRow label="Delivery" value={method === "pickup" ? "Pickup" : deliveryFee > 0 ? formatPrice(deliveryFee) : "TBD"} />
-                  <SumRow label="GST (5%)" value={formatPrice(gst)} />
+                  <SumRow label={`GST (${settings?.gstRate ?? 5}%)`} value={formatPrice(gst)} />
                 </div>
 
                 <div className="divider" style={{ margin: "0 0 16px" }} />
