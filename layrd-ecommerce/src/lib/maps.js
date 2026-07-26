@@ -17,7 +17,7 @@ const MOCK_FALLBACK = {
 
 
 async function geocodeAddress(address) {
-  const url = `https://api.openrouteservice.org/geocode/search` +
+  const url = `https://api.heigit.org/pelias/v1/search` +
     `?api_key=${ORS_API_KEY}` +
     `&text=${encodeURIComponent(address)}` +
     `&size=1` +
@@ -69,7 +69,7 @@ export async function getDeliveryDistance(destinationAddress) {
     // "distance between two points" use case and returns simpler output.
     // Even though we only have ONE origin and ONE destination (not a true
     // matrix of many-to-many), the API still works fine for a 1x1 case.
-    const matrixUrl = "https://api.openrouteservice.org/v2/matrix/driving-car";
+    const matrixUrl = "https://api.heigit.org/openrouteservice/v2/matrix/driving-car";
 
     const matrixRes = await fetch(matrixUrl, {
       method: "POST",
