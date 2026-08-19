@@ -1,89 +1,187 @@
-import { supabase } from './supabase';
+"use server";
+// ─────────────────────────────────────────────
+// LÄYRD – admin-products.js
+// Server-side service layer for Products admin.
+// Matches the REAL live Supabase schema (verified via information_schema):
+//   id (text), category = 'cake'|'espresso'|'bundle', flavour_type = 'core'|'limited'
+//   size = plain text (e.g. "250ml"), status = exact case, allergens = plain text
+//   featured = boolean, max 4 featured at once
+// ─────────────────────────────────────────────
+import { getSupabaseAdmin } from "./supabase.js";
+import { requireAdmin } from "./admin-server-auth.js";
 
-// WHY these constants live here: admin/products/page.jsx needs them to
-// populate its dropdown selects. Values match the exact CHECK constraints
-// defined on the products table in backend-schema.md — keeping them here
-// (not hardcoded in the page) means if the DB constraint ever changes,
-// there's one place to update.
-export const PRODUCT_CATEGORIES = ["cake", "espresso", "bundle"];
-export const FLAVOUR_TYPES = ["core", "limited"];
-export const PRODUCT_SIZES = ["150ml", "250ml", "330ml", "60ml"];
-export const PRODUCT_STATUSES = ["Available", "Coming Soon", "Sold Out", "Hidden"];
-export async function getProducts() {
+const MAX_FEATURED = 4;
+
+function generateProductId(name) {
+  const slug = (name || "product")
+    .toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  const suffix = Date.now().toString(36).slice(-5);
+  return `${slug}-${suffix}`;
+}
+
+export async function getProducts(accessToken) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .order('category', { ascending: true })
-    .order('flavour_type', { ascending: true });
+    .from("products").select("*").order("created_at", { ascending: false });
 
   if (error) {
-    // We don't throw here — a broken product fetch shouldn't crash the
-    // whole shop page. Log it, return an empty array, let the UI handle
-    // "no products" gracefully.
-    console.error('getProducts error:', error);
-    return [];
+    console.error("[Admin Products] Error fetching products:", error);
+    throw new Error(`Failed to fetch products: ${error.message}`);
   }
 
-  return data;
+  return (data || []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    category: p.category,
+    flavour: p.flavour,
+    flavourType: p.flavour_type,
+    size: p.size,
+    price: parseFloat(p.price),
+    description: p.description,
+    ingredients: p.ingredients,
+    allergens: p.allergens || "",
+    status: p.status,
+    releaseDate: p.release_date,
+    image: p.image_url,
+    featured: p.featured ?? false,
+  }));
 }
 
-// Fetch a single product by its slug/id (e.g. 'lotus-250').
-// Used on product detail views.
-export async function getProductById(id) {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .single();
+async function uploadImage(file) {
+  if (!file) return null;
+  const supabase = getSupabaseAdmin();
+  const ext = file.name.split(".").pop();
+  const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${ext}`;
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
 
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from("product-images")
+    .upload(filename, buffer, { contentType: file.type, upsert: false });
+
+  if (uploadError) {
+    console.error("[Admin Products] Image upload failed:", uploadError);
+    throw new Error(`Failed to upload product image: ${uploadError.message}`);
+  }
+
+  const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(uploadData.path);
+  return publicUrl;
+}
+
+async function getFeaturedCount(supabase, excludeId = null) {
+  let query = supabase.from("products").select("id", { count: "exact", head: true }).eq("featured", true);
+  if (excludeId) query = query.neq("id", excludeId);
+  const { count, error } = await query;
   if (error) {
-    console.error('getProductById error:', error);
-    return null;
+    console.error("[Admin Products] Error counting featured products:", error);
+    return 0;
+  }
+  return count ?? 0;
+}
+
+export async function createProduct(accessToken, product) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
+  const supabase = getSupabaseAdmin();
+
+  if (product.featured) {
+    const count = await getFeaturedCount(supabase);
+    if (count >= MAX_FEATURED) {
+      throw new Error(`Only ${MAX_FEATURED} products can be featured on the homepage at once. Unfeature one first.`);
+    }
   }
 
+  const newProduct = {
+    id: generateProductId(product.name),
+    name: product.name,
+    category: product.category,
+    flavour: product.flavour || product.name,
+    flavour_type: product.flavourType,
+    size: product.size,
+    price: parseFloat(product.price),
+    status: product.status,
+    description: product.description || null,
+    ingredients: product.ingredients || null,
+    allergens: product.allergens || null,
+    featured: !!product.featured,
+    release_date: product.status === "Coming Soon" && product.releaseDate ? product.releaseDate : null,
+  };
+
+  if (product.image instanceof File) {
+    newProduct.image_url = await uploadImage(product.image);
+  } else if (typeof product.image === "string" && product.image.trim()) {
+    newProduct.image_url = product.image;
+  }
+
+  const { data, error } = await supabase.from("products").insert(newProduct).select().single();
+  if (error) {
+    console.error("[Admin Products] Error creating product:", error);
+    throw new Error(`Failed to create product: ${error.message}`);
+  }
   return data;
 }
 
-// --- ADMIN-ONLY FUNCTIONS BELOW ---
-// These require the SERVICE ROLE client (bypasses RLS), because regular
-// customers should never be able to create/edit/delete products — only
-// Adam, through the admin panel, calling a server-side API route.
-//
-// IMPORTANT: these functions must ONLY ever be called from Next.js API
-// routes (src/app/api/**/route.js), NEVER from a "use client" component.
-// That's why they accept `supabaseAdmin` as a parameter instead of
-// importing getSupabaseAdmin() directly here — it forces whoever calls
-// these functions to explicitly pass in the admin client, making it
-// obvious at the call site that this is a privileged, server-only action.
+export async function updateProduct(accessToken, id, updates) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
 
-export async function createProduct(supabaseAdmin, productData) {
-  const { data, error } = await supabaseAdmin
-    .from('products')
-    .insert(productData)
-    .select()
-    .single();
+  const supabase = getSupabaseAdmin();
+  const dbUpdates = {};
 
-  if (error) throw error;
+  if (updates.name !== undefined) dbUpdates.name = updates.name;
+  if (updates.category !== undefined) dbUpdates.category = updates.category;
+  if (updates.flavour !== undefined) dbUpdates.flavour = updates.flavour;
+  if (updates.flavourType !== undefined) dbUpdates.flavour_type = updates.flavourType;
+  if (updates.size !== undefined) dbUpdates.size = updates.size;
+  if (updates.price !== undefined) dbUpdates.price = parseFloat(updates.price);
+  if (updates.status !== undefined) dbUpdates.status = updates.status;
+  if (updates.description !== undefined) dbUpdates.description = updates.description;
+  if (updates.ingredients !== undefined) dbUpdates.ingredients = updates.ingredients;
+  if (updates.allergens !== undefined) dbUpdates.allergens = updates.allergens;
+  if (updates.releaseDate !== undefined) dbUpdates.release_date = updates.releaseDate || null;
+
+  if (updates.featured !== undefined) {
+    if (updates.featured === true) {
+      const count = await getFeaturedCount(supabase, id);
+      if (count >= MAX_FEATURED) {
+        throw new Error(`Only ${MAX_FEATURED} products can be featured on the homepage at once. Unfeature one first.`);
+      }
+    }
+    dbUpdates.featured = updates.featured;
+  }
+
+  if (updates.image instanceof File) {
+    dbUpdates.image_url = await uploadImage(updates.image);
+  } else if (typeof updates.image === "string" && updates.image.trim()) {
+    dbUpdates.image_url = updates.image;
+  }
+
+  const { data, error } = await supabase.from("products").update(dbUpdates).eq("id", id).select().single();
+  if (error) {
+    console.error("[Admin Products] Error updating product:", error);
+    throw new Error(`Failed to update product: ${error.message}`);
+  }
   return data;
 }
 
-export async function updateProduct(supabaseAdmin, id, updates) {
-  const { data, error } = await supabaseAdmin
-    .from('products')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+export async function toggleFeatured(accessToken, id, featured) {
+  return updateProduct(accessToken, id, { featured });
 }
 
-export async function deleteProduct(supabaseAdmin, id) {
-  const { error } = await supabaseAdmin
-    .from('products')
-    .delete()
-    .eq('id', id);
+export async function deleteProduct(accessToken, id) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
 
-  if (error) throw error;
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) {
+    console.error("[Admin Products] Error deleting product:", error);
+    throw new Error(`Failed to delete product: ${error.message}`);
+  }
 }

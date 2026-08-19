@@ -1,253 +1,1424 @@
 @import "tailwindcss";
 
-/* ═══════════════════════════════════════════════════════════
-   LÄYRD Design System — implements uxui-brief.md sections 2-5
-   Day/Night theme tokens, typography, and core component styles.
+/* ═══════════════════════════════════════════════
+   LÄYRD – Global Design System
+   ───────────────────────────────────────────────
+   Day mode  → cream / warm-white backgrounds
+   Night mode → charcoal / black backgrounds
+   Gold stays as the accent in both modes.
+   Components use semantic variables (--bg-main,
+   --text-main, etc.) — not raw hex values.
+   ═══════════════════════════════════════════════ */
 
-   WHY this was filled in on Day 3 (Ritesh): Navbar, Footer, and
-   CartSidebar (Aaryan's components) all reference CSS variables and
-   classes (--bg-main, --accent, .navbar, .cart-sidebar, etc.) that
-   didn't exist yet — this was still create-next-app boilerplate.
-   Cart/checkout logic needed a working page to test against, so this
-   implements uxui-brief.md's already-documented spec directly.
-   Aaryan: fully open to refine/restyle anything here — nothing here
-   is meant to be final, just unblocks functional testing.
-   ═══════════════════════════════════════════════════════════ */
-
-/* ─── Day mode (default) — uxui-brief.md 2.2 ─── */
+/* ── Raw brand palette (never used directly in components) ── */
 :root {
-  --bg-main: #FAF8F3;        /* Warm White */
-  --bg-soft: #F7F3EA;        /* Soft Beige — section contrast */
-  --bg-card: #FFFFFF;        /* Pure White — cards/modals */
-  --text-main: #0E0E0E;      /* Near Black — primary text */
-  --text-muted: #77736B;     /* Warm Grey — secondary text */
-  --accent: #B89B5E;         /* Gold — unifying accent, same in both modes */
-  --border-soft: rgba(14, 14, 14, 0.1);
-  --border: rgba(14, 14, 14, 0.15);
-  --color-white: #FFFFFF;
+  --black: #0E0E0E;
+  --charcoal: #1A1A1A;
+  --cream: #F7F3EA;
+  --warm-white: #FAF8F3;
+  --soft-beige: #E8DFD2;
+  --muted-gold: #B89B5E;
+  --warm-grey: #77736B;
+  --white: #FFFFFF;
 
-  /* Global easing curve — uxui-brief.md section 5 */
+  /* ── Day mode semantic tokens (default / light) ──────────
+     60% bg: warm-white + cream
+     30% text/structure: black + charcoal + warm-grey
+     10% accent: muted-gold
+  ─────────────────────────────────────────────────────── */
+  --bg-main: #FAF8F3;
+  /* page background */
+  --bg-soft: #F7F3EA;
+  /* alternate section bg */
+  --surface: #FFFFFF;
+  /* cards, inputs, modals */
+  --surface-muted: #F7F3EA;
+  /* subtle inset surfaces */
+  --text-main: #0E0E0E;
+  /* headings, primary text */
+  --text-muted: #000000;
+  /* labels, captions, secondary */
+  --border-soft: #E8DFD2;
+  /* card borders, dividers */
+  --accent: #8B4513;
+  /* brown — buttons, highlights */
+  --accent-hover: #5C2E0B;
+  /* brown on hover */
+
+  /* Legacy aliases — keeps older inline styles working */
+  --bg-primary: var(--bg-main);
+  --bg-secondary: var(--bg-soft);
+  --bg-surface: var(--bg-soft);
+  --bg-card: var(--surface);
+  --surface-primary: var(--surface);
+  --surface-secondary: var(--surface-muted);
+  --text-primary: var(--text-main);
+  --text-secondary: var(--text-muted);
+  --border: var(--border-soft);
+  --border-accent: var(--accent);
+  --color-accent: var(--accent);
+  --color-sand: var(--text-muted);
+  --color-cream: var(--text-main);
+  --accent-primary: var(--accent);
+
+  /* Price colour matches the button/accent color */
+  --price-color: var(--accent);
+
+  /* Layout */
+  --nav-height: 72px;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* ─── Aliases for components using an alternate naming convention ───
-     WHY these exist: Navbar.jsx/Footer.jsx (and possibly other shared
-     components) reference --accent-primary, --text-primary,
-     --text-secondary, --surface-primary instead of the --accent/
-     --text-main/--text-muted/--bg-card names used elsewhere in this file.
-     Rather than editing every component to match one convention, these
-     aliases let BOTH naming schemes resolve to the same actual colors.
-     This is what was silently making the cart badge invisible
-     (var(--accent-primary) resolved to nothing since it didn't exist). */
-  --accent-primary: var(--accent);
-  --text-primary: var(--text-main);
-  --text-secondary: var(--text-muted);
-  --surface-primary: var(--bg-card);
 }
 
-/* ─── Night mode — uxui-brief.md 2.2 ───
-   WHY [data-theme="night"] on :root, not a media query: ThemeToggle.jsx
-   sets this attribute manually via localStorage, giving the USER control
-   (not just following OS preference) — matches project-brief.md section 9. */
+/* ── Night mode semantic tokens ──────────────────────────
+   60% bg: black + charcoal
+   30% text/contrast: warm-white + cream + soft-beige
+   10% accent: muted-gold (unchanged)
+   Rule: do NOT blindly invert — keep every element readable.
+─────────────────────────────────────────────────────── */
 [data-theme="night"] {
-  --bg-main: #0E0E0E;        /* Deep Black */
-  --bg-soft: #1A1A1A;        /* Charcoal — section contrast */
-  --bg-card: #161616;        /* Dark Grey — cards/modals */
-  --text-main: #FAF8F3;      /* Warm White — primary text */
-  --text-muted: #E8DFD2;     /* Soft Beige — secondary text */
-  --accent: #B89B5E;         /* Gold stays the same in both modes */
-  --border-soft: rgba(250, 248, 243, 0.1);
-  --border: rgba(250, 248, 243, 0.15);
+  --bg-main: #0E0E0E;
+  --bg-soft: #1A1A1A;
+  --surface: #161616;
+  --surface-muted: #1F1F1F;
+  --text-main: #FAF8F3;
+  --text-muted: #E8DFD2;
+  --border-soft: rgba(232, 223, 210, 0.22);
+  --accent: #B89B5E;
+  --accent-hover: #C7AB6D;
 
-  /* Same aliases, re-declared here since the underlying values they
-     point to (--accent, --text-main, etc.) change in night mode too */
-  --accent-primary: var(--accent);
+  /* Prices use a lighter gold in night mode */
+  --price-color: #C7AB6D;
+
+  /* Legacy aliases */
+  --bg-primary: var(--bg-main);
+  --bg-secondary: var(--bg-soft);
+  --bg-surface: var(--bg-soft);
+  --bg-card: var(--surface);
+  --surface-primary: var(--surface);
+  --surface-secondary: var(--surface-muted);
   --text-primary: var(--text-main);
   --text-secondary: var(--text-muted);
-  --surface-primary: var(--bg-card);
+  --border: var(--border-soft);
+  --border-accent: var(--accent);
+  --color-accent: var(--accent);
+  --color-sand: var(--text-muted);
+  --color-cream: var(--text-main);
+  --accent-primary: var(--accent);
 }
 
-/* ─── Base ─── */
-* {
+/* ─── Reset / Base ─── */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  /* Removed accidental monospace override to allow brand fonts (Inter/Cormorant) to render correctly */
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+  /* Reset to standard default */
 }
 
 body {
-  background: var(--bg-main);
+  background-color: var(--bg-main);
   color: var(--text-main);
-  font-family: 'Inter', system-ui, sans-serif;
-  /* Smooth theme transitions — uxui-brief.md section 5 "Theme Toggle" */
-  transition: background 0.3s var(--ease), color 0.3s var(--ease);
+  font-family: monospace;
+  font-size: 20px;
+  line-height: 160%;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+/* ─── Typography ─── */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: monospace;
+  line-height: 120%;
+  letter-spacing: 0.02em;
+  color: var(--text-main);
+}
+
+h1 {
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 600;
+}
+
+h2 {
+  font-size: clamp(26px, 4vw, 32px);
+  font-weight: 500;
+}
+
+h3 {
+  font-size: clamp(22px, 3.5vw, 28px);
+  font-weight: 500;
+}
+
+h4 {
+  font-size: clamp(20px, 3vw, 24px);
+  font-weight: 500;
+}
+
+h5 {
+  font-size: clamp(18px, 2.5vw, 20px);
+  font-weight: 600;
+}
+
+p {
+  color: var(--text-muted);
+  line-height: 160%;
 }
 
 a {
-  text-decoration: none;
   color: inherit;
+  text-decoration: none;
 }
 
-/* ─── Layout helpers — uxui-brief.md section 4 ─── */
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+/* ─── Layout utilities ─── */
 .container {
+  width: 100%;
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 24px;
 }
 
-.divider {
-  height: 1px;
-  background: var(--border-soft);
-  border: none;
+.section {
+  padding: 80px 0;
 }
 
-/* ─── Navbar — uxui-brief.md 4 "Navigation" ─── */
-.navbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  height: 72px;
-  display: flex;
-  align-items: center;
-  background: rgba(250, 248, 243, 0.85);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-soft);
+.section-sm {
+  padding: 48px 0;
 }
 
-[data-theme="night"] .navbar {
-  background: rgba(14, 14, 14, 0.85);
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* ─── Theme toggle button ─── */
-.theme-toggle {
-  background: none;
-  border: 1px solid var(--border-soft);
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── Buttons ─── */
+.btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+  padding: 12px 28px;
+  font-family: monospace;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
   cursor: pointer;
-  color: var(--text-main);
-  transition: border-color 0.2s var(--ease);
+  transition: all 0.25s var(--ease);
+  white-space: nowrap;
+  border-radius: 10px;
 }
 
-.theme-toggle:hover {
+/* Gold filled — primary action */
+.btn-primary {
+  background: var(--accent);
+  color: #FFFFFF;
   border-color: var(--accent);
 }
 
-/* ─── Buttons — uxui-brief.md 3.1 ─── */
-.btn {
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  border-radius: 2px;
-  padding: 12px 28px;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.2s var(--ease);
-}
-
-.btn-primary {
-  background: var(--accent);
-  color: var(--color-white);
-}
 .btn-primary:hover {
-  filter: brightness(0.92);
-  box-shadow: 0 0 16px rgba(184, 155, 94, 0.4);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(184, 155, 94, 0.28);
 }
 
+/* Transparent outlined — secondary action */
 .btn-outline {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--text-main);
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  box-shadow: 0 4px 14px rgba(184, 155, 94, 0.08);
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover,
+.btn-outline:focus-visible {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  transform: translateY(-1px);
+}
+
+.btn-outline:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn-outline:active {
+  transform: translateY(0);
+}
+
+.btn-outline:disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.btn-ghost {
   background: transparent;
-  border-color: var(--text-main);
+  color: var(--text-muted);
+  border-color: transparent;
+}
+
+.btn-ghost:hover {
   color: var(--text-main);
 }
-.btn-outline:hover {
-  background: var(--text-main);
-  color: var(--bg-main);
+
+.btn-danger {
+  background: #7f1d1d;
+  color: #FAF8F3;
+  border-color: #7f1d1d;
+}
+
+.btn-danger:hover {
+  background: #991b1b;
 }
 
 .btn-sm {
   padding: 8px 18px;
-  font-size: 0.75rem;
+  font-size: 14px;
 }
 
-/* ─── Cart Sidebar — uxui-brief.md 6.2 ───
-   WHY fixed positioning + transform slide: the panel needs to sit ABOVE
-   the backdrop (already inline-styled in CartSidebar.jsx) and slide in
-   from the right without affecting page layout/scroll position. */
-.cart-sidebar {
-  position: fixed;
-  top: 0;
-  right: 0;
-  height: 100vh;
-  width: 420px;
-  max-width: 100vw;
-  background: var(--bg-card);
-  z-index: 300;
+.btn-lg {
+  padding: 16px 36px;
+  font-size: 20px;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ─── Cards ─── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.25s var(--ease), transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+
+.card:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(184, 155, 94, 0.12);
+}
+
+/* ─── Forms ─── */
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 2px;
+  color: var(--text-main);
+  font-family: monospace;
+  font-size: 20px;
+  transition: border-color 0.2s, background 0.3s;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--accent);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* Select inherits .input but needs explicit appearance reset */
+select.input {
+  appearance: none;
+  cursor: pointer;
+}
+
+.label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+/* ─── Dividers ─── */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: var(--border-soft);
+  margin: 32px 0;
+}
+
+.divider-accent {
+  width: 48px;
+  height: 2px;
+  background: var(--accent);
+  margin: 16px 0;
+}
+
+/* ─── Badges ─── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+
+.badge-gold {
+  background: rgba(184, 155, 94, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(184, 155, 94, 0.3);
+}
+
+.badge-green {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.badge-red {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.badge-gray {
+  background: rgba(119, 115, 107, 0.1);
+  color: var(--text-muted);
+  border: 1px solid var(--border-soft);
+}
+
+/* Night mode: brighten status badge text for readability */
+[data-theme="night"] .badge-green {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+[data-theme="night"] .badge-red {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="night"] .badge-gray {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Navbar ─── */
+.navbar-inner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(1rem, 2vw, 2rem);
+}
+
+.navbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.navbar-brand-symbol {
+  width: 34px;
+  height: 34px;
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+[data-theme="night"] .navbar-brand-symbol {
+  filter: invert(1) brightness(1.5);
+}
+
+.navbar-brand-wordmark {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.navbar-links {
   display: flex;
-  flex-direction: column;
-  transform: translateX(100%);
-  transition: transform 0.3s var(--ease);
-  box-shadow: -8px 0 24px rgba(14, 14, 14, 0.12);
+  justify-content: center;
+  min-width: 0;
+  gap: 32px;
 }
 
-.cart-sidebar.open {
-  transform: translateX(0);
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  gap: clamp(12px, 2vw, 24px);
 }
 
-@media (max-width: 480px) {
-  .cart-sidebar {
-    width: 100vw;
-  }
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--nav-height);
+  /* Slightly opaque so it blurs content beneath */
+  background: rgba(250, 248, 243, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  transition: background 0.3s var(--ease), border-color 0.3s var(--ease);
+}
+
+[data-theme="night"] .navbar {
+  background: rgba(26, 26, 26, 0.96);
 }
 
 /* ─── Footer ─── */
 .footer {
   background: var(--bg-soft);
   border-top: 1px solid var(--border-soft);
-  color: var(--text-muted);
-}
-/* ─────────────────────────────────────────────
-   Admin table styling
-   WHY this exists: .table is used across all admin pages
-   (Products, Orders, Events, etc. via AdminTable.jsx) but had
-   no actual CSS rules defined anywhere — cells were rendering
-   with the browser's bare default spacing, making columns run
-   together. This gives consistent padding/alignment everywhere
-   AdminTable is used, without needing per-page fixes.
-   ───────────────────────────────────────────── */
-.table {
-  width: 100%;
-  border-collapse: collapse;
 }
 
-.table th,
-.table td {
-  padding: 14px 20px;
-  text-align: left;
-  font-size: 0.85rem;
-  border-bottom: 1px solid var(--border);
+/* ─── Hero gradient ─── */
+.hero-gradient {
+  background: linear-gradient(135deg, #FAF8F3 0%, #EDE5D8 50%, #FAF8F3 100%);
+}
+
+[data-theme="night"] .hero-gradient {
+  background: linear-gradient(135deg, #0E0E0E 0%, #1a1208 50%, #0E0E0E 100%);
+}
+
+/* ─── Hero pattern overlay ─── */
+.hero-pattern-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: url('/patterns/hero-pattern.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Pattern art is light-on-white; invert it in Night mode so it reads
+   correctly against the dark hero background while staying at the
+   same 0.2 opacity. */
+[data-theme="night"] .hero-pattern-overlay {
+  filter: invert(1);
+  opacity: 0.2;
+}
+
+/* ─── Hero actions ─── */
+.hero-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(8px, 2.5vw, 16px);
+  width: min(100%, 540px);
+  margin-inline: auto;
+}
+
+.hero-action {
+  width: 100%;
+  min-width: 0;
+  min-height: clamp(52px, 14vw, 64px);
+  padding-inline: clamp(10px, 3vw, 24px);
+  font-size: clamp(0.78rem, 3.5vw, 1rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   white-space: nowrap;
 }
 
+/* ─── Product grid ─── */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.homepage-product-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+}
+
+.homepage-product-grid>* {
+  flex: 0 1 280px;
+  max-width: 100%;
+}
+
+/* ─── Bundle grid ─── */
+.bundle-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 60px;
+  align-items: start;
+}
+
+/* ─── Profile grid ─── */
+.profile-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 60px;
+  align-items: start;
+}
+
+/* ─── Overlay / Modal ─── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 14, 14, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* ─── Cart sidebar ─── */
+.cart-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 420px;
+  max-width: 100vw;
+  background: var(--bg-soft);
+  border-left: 1px solid var(--border-soft);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.35s var(--ease);
+}
+
+.cart-sidebar.open {
+  transform: translateX(0);
+}
+
+/* ─── Tag / filter pill ─── */
+.tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  font-size: 14px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tag:hover,
+.tag.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(184, 155, 94, 0.08);
+}
+
+/* ─── Table ─── */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+  /* ensure tables can scroll when wrapper is small */
+}
+
+/* ─── Shop Section Headings ─── */
+.shop-section-header {
+  margin-bottom: 24px;
+}
+
+.shop-section-heading {
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: 0.02em;
+  line-height: 120%;
+  margin: 0;
+}
+
+.shop-section-desc {
+  font-size: 16px;
+  color: var(--text-muted);
+  line-height: 160%;
+  margin-top: 8px;
+}
+
+/* ─── Shared Product Card System ─── */
+.product-card-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card-media {
+  height: 240px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-soft);
+}
+
+.product-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.card:hover .product-card-media img {
+  transform: scale(1.04);
+}
+
+.product-card-neutral {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--surface-muted) 0%, var(--bg-soft) 100%);
+}
+
+.product-card-body {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card-eyebrow {
+  font-size: 20px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.product-card-title {
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 8px;
+  line-height: 120%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(32px * 1.2 * 2);
+  /* reserves space for 2 lines even on 1-line titles */
+}
+
+.product-card-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 160%;
+}
+
+.product-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  gap: 12px;
+}
+
+.product-card-price {
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 600;
+  color: var(--price-color);
+  letter-spacing: 0.02em;
+}
+
+/* ─── Specific Footer Layout for Bundles ─── */
+.bundle-card-footer {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.bundle-card-price {
+  min-width: 0;
+  white-space: nowrap;
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 600;
+  color: var(--price-color);
+  letter-spacing: 0.02em;
+}
+
+.bundle-card-action {
+  max-width: 100%;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+
 .table th {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 14px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text-main);
+  font-size: 20px;
+}
+
+.table tr:hover td {
+  background: rgba(184, 155, 94, 0.04);
+}
+
+/* ─── FAQ Accordion ─── */
+.accordion-item {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.accordion-trigger {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-main);
+  font-size: 20px;
+  text-align: left;
+}
+
+.accordion-content {
+  padding-bottom: 20px;
+}
+
+/* ─── Admin sidebar ─────────────────────────────────────────
+   Always dark regardless of day/night — standard dashboard
+   convention (sidebar stays anchored, content area adapts).
+────────────────────────────────────────────────────────── */
+.admin-sidebar {
+  width: 240px;
+  min-height: 100vh;
+  background: #0E0E0E;
+  border-right: 1px solid rgba(232, 223, 210, 0.12);
+  padding: 24px 0;
+  flex-shrink: 0;
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  font-size: 20px;
+  color: #77736B;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+
+.admin-nav-link:hover,
+.admin-nav-link.active {
+  color: #FAF8F3;
+  background: rgba(184, 155, 94, 0.08);
+  border-left-color: var(--accent);
+}
+
+/* ─── Theme toggle button ─── */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  color: var(--accent);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ─── Animations ─── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s var(--ease) both;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--border-soft) 25%, var(--surface) 50%, var(--border-soft) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 2px;
+}
+
+/* ─── Hero Decorative Rings ─── */
+.hero-decorative-ring-1 {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border: 2px solid var(--accent);
+  opacity: 0.2;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.hero-decorative-ring-2 {
+  position: absolute;
+  width: 900px;
+  height: 900px;
+  border: 2px solid var(--accent);
+  opacity: 0.1;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* ─── Hero Elegant Shapes ─── */
+.hero-shapes-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  pointer-events: none;
+}
+
+.hero-shapes {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-shape-wrap {
+  position: absolute;
+  opacity: 0;
+  animation: heroShapeIn 1.8s var(--ease) forwards;
+}
+
+@keyframes heroShapeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-40px) rotate(var(--rot-from, -6deg));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(var(--rot-to, -6deg));
+  }
+}
+
+.hero-shape-float {
+  position: relative;
+  animation: heroShapeFloat 8s ease-in-out infinite;
+}
+
+@keyframes heroShapeFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(24px);
+  }
+}
+
+.hero-shape-can {
+  display: block;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 25px 20px rgba(0, 0, 0, 0.25));
+  opacity: 0.96;
+}
+
+[data-theme="night"] .hero-shape-can {
+  filter: drop-shadow(0 25px 25px rgba(0, 0, 0, 0.6));
+}
+
+.hero-shape-ground {
+  position: absolute;
+  z-index: 0;
+  bottom: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 65%;
+  height: 28px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.4) 0%, transparent 72%);
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+[data-theme="night"] .hero-shape-ground {
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.6) 0%, transparent 72%);
+}
+
+.hero-shape-1 {
+  left: -60px;
+  top: 14%;
+  --rot-from: -12deg;
+  --rot-to: -10deg;
+}
+
+.hero-shape-2 {
+  right: -60px;
+  top: 34%;
+  --rot-from: 14deg;
+  --rot-to: 10deg;
+}
+
+@media (max-width: 1100px) {
+
+  .hero-shape-1,
+  .hero-shape-2 {
+    display: none;
+  }
+}
+
+/* ─── Responsive Utility Classes ─── */
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.responsive-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.responsive-grid-4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+.responsive-grid-1-2 {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+}
+
+.responsive-grid-1-1-6 {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+}
+
+.responsive-grid-1-1-4 {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+}
+
+.responsive-grid-cart {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+}
+
+.responsive-grid-bundle {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+}
+
+.responsive-grid-profile {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+}
+
+.responsive-grid-auto-4 {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+}
+
+.flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.cart-row-grid {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 20px;
+  align-items: center;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  .section {
+    padding: 48px 0;
+  }
+
+  .cart-sidebar {
+    width: 100vw;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    transform: translateX(-100%);
+    display: flex !important;
+    transition: transform 0.3s var(--ease);
+  }
+
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .admin-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s var(--ease);
+  }
+
+  .admin-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .hero-decorative-ring-1 {
+    width: 400px;
+    height: 400px;
+  }
+
+  .hero-decorative-ring-2 {
+    width: 600px;
+    height: 600px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+
+
+  .login-label {
+    display: none;
+  }
+
+  .login-label {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-brand-wordmark {
+    font-size: 24px;
+  }
+
+  .cart-label {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+
+  /* Navbar breakpoints */
+  .navbar-links {
+    display: none !important;
+  }
+
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  /* Make all responsive grids collapse to 1 column on mobile */
+  .responsive-grid-2,
+  .responsive-grid-3,
+  .responsive-grid-4,
+  .responsive-grid-1-2,
+  .responsive-grid-1-1-6,
+  .responsive-grid-1-1-4,
+  .responsive-grid-cart,
+  .responsive-grid-bundle,
+  .responsive-grid-profile,
+  .responsive-grid-auto-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cart-row-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .cart-row-grid>div:first-child {
+    margin: 0 auto;
+  }
+
+  .cart-row-grid>div:last-child {
+    text-align: center;
+  }
+
+  /* Bundle layout */
+  .bundle-layout {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+
+  /* ─── Admin Sidebar Mobile ─── */
+  .admin-sidebar {
+    transition: transform 0.3s ease;
+  }
+
+  @media (max-width: 768px) {
+    .admin-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 50;
+      transform: translateX(-100%);
+    }
+
+    .admin-sidebar.open {
+      transform: translateX(0);
+    }
+
+    .admin-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 40;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .admin-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  /* Profile layout */
+  .profile-layout {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+}
+
+/* ─── Keyframes (moved from inline JSX style tags) ─── */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Bundle Builder UI --- */
+.bundle-builder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .bundle-builder-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 350px) {
+  .bundle-builder-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bundle-builder-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s var(--ease);
+  height: 100%;
+}
+
+.bundle-builder-card:hover:not(.disabled) {
+  border-color: var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="night"] .bundle-builder-card:hover:not(.disabled) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.bundle-builder-card.disabled {
+  opacity: 0.5;
+}
+
+.bundle-builder-card--selected {
+  border-color: var(--accent);
+}
+
+.bundle-builder-media {
+  height: 120px;
+  position: relative;
+  background: var(--bg-soft);
+}
+
+.bundle-builder-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bundle-builder-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.bundle-builder-title {
+  font-size: 16px;
   font-weight: 600;
-  background: var(--bg-soft);
+  color: var(--text-main);
+  margin-bottom: 4px;
+  line-height: 120%;
 }
 
-.table tbody tr:hover {
-  background: var(--bg-soft);
+.bundle-builder-action {
+  margin-top: auto;
+  padding-top: 12px;
 }
 
-.table tbody tr:last-child td {
-  border-bottom: none;
+
+.bundle-sidebar {
+  position: sticky;
+  top: 100px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 900px) {
+  .bundle-sidebar {
+    position: static;
+  }
 }

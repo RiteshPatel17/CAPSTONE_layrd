@@ -24,7 +24,6 @@
 // re-check that themselves.
 // ─────────────────────────────────────────────
 const express = require('express');
-const cors = require('cors');
 const dotenv = require('dotenv');
 const { GoogleGenAI } = require('@google/genai');
 const { createClient } = require('@supabase/supabase-js');
@@ -37,7 +36,12 @@ dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 const app = express();
 const PORT = process.env.PORT || 3004;
 
-app.use(cors());
+// No cors() here on purpose: this service is only ever called
+// server-to-server by the main Next.js app (which proxies every
+// client-facing request), never directly from a browser — a browser
+// has no way to supply the x-internal-key header anyway. Leaving CORS
+// off means a cross-origin browser request fails at the preflight
+// stage instead of ever reaching the internal-key check.
 app.use(express.json());
 
 const supabase = createClient(

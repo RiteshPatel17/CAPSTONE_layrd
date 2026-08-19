@@ -11,11 +11,10 @@ export default function AdminTable({ headers, children, emptyMessage = "No recor
   const isEmpty = !children || (Array.isArray(children) && children.length === 0);
 
   return (
-    <div style={{
+    <div className="table-responsive" style={{
       background: "var(--bg-card)",
       border: "1px solid var(--border)",
       borderRadius: "4px",
-      overflow: "auto",
     }}>
       <table className="table">
         <thead>

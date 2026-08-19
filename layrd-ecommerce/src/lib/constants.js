@@ -1,12 +1,7 @@
 // ─────────────────────────────────────────────
 // LÄYRD – App-wide constants
 // ─────────────────────────────────────────────
-// GST rate and delivery fee tiers are NOT hardcoded here — they live in
-// Supabase's settings table (settings.gst_rate, settings.delivery_tiers)
-// and are admin-editable per PRD FR-25. pricing.js loads them once via
-// loadPricingSettings() and caches them in memory. Do not re-add hardcoded
-// copies here — that creates two sources of truth that can silently drift
-// out of sync (this happened once already during Day 3 development).
+
 export const BRAND = {
   name: "LÄYRD",
   tagline: "Cake in a Can | Espresso Shots",
@@ -16,6 +11,8 @@ export const BRAND = {
   pickupArea: "Pineridge NE, Calgary",
 };
 
+// GST rate (configurable in admin settings)
+export const GST_RATE = 0.05; // 5%
 
 // ─── Product pricing ───
 export const PRICES = {
@@ -48,6 +45,17 @@ export const EVENT_MIN_CANS = 24;
 
 // Minimum notice for events (business days)
 export const EVENT_MIN_NOTICE_DAYS = 5;
+
+// ─── Delivery fee tiers ───
+// Each tier: { maxKm, fee }
+export const DELIVERY_TIERS = [
+  { maxKm: 5,   fee: 5  },
+  { maxKm: 10,  fee: 10 },
+  { maxKm: 15,  fee: 15 },
+  { maxKm: 20,  fee: 20 },
+  { maxKm: 25,  fee: 25 },
+  { maxKm: Infinity, fee: 30 },
+];
 
 // Outside Calgary: pickup only flag
 export const CALGARY_ONLY_DELIVERY = true;

@@ -2,16 +2,28 @@
 // LÄYRD – notifications-service (Express, port 3003)
 //
 // WHAT THIS DOES: sends every transactional/notification email in the
-// app via Resend — order confirmations, admin new-order alerts, event/
-// wholesale/AI-label status updates to customers, and "new submission"
-// alerts to the admin. Each email is its own route (see the numbered
-// comments below), called by the main Next.js app right after whatever
-// database change triggered it.
+// app — order confirmations, admin new-order alerts, event/wholesale/
+// AI-label status updates to customers, and "new submission" alerts to
+// the admin. Each email is its own route (see the numbered comments
+// below), called by the main Next.js app right after whatever database
+// change triggered it.
 //
-// WHY A SEPARATE SERVICE: centralizes the Resend API key and every email
-// template in one place, so there's exactly one spot to update sender
-// address, branding, or the email provider itself — instead of that logic
-// being scattered across every API route that needs to notify someone.
+// EMAIL PROVIDER: Resend by default. If GMAIL_USER + GMAIL_APP_PASSWORD
+// are set in .env.local, Gmail SMTP (via nodemailer) is used instead —
+// no other code changes needed to switch. This exists as a zero-DNS
+// fallback for while the layrd.org domain isn't verified in Resend yet
+// (verifying a domain needs DNS access to layrd.org, which may sit with
+// the client rather than this dev team). Gmail SMTP always sends from
+// the authenticated GMAIL_USER address itself, not FROM_EMAIL — Gmail
+// won't reliably relay arbitrary "from" domains without its own alias
+// verification, so branded @layrd.org sending only really works once
+// the Resend domain is verified. See CLAUDE.md for the full picture.
+//
+// WHY A SEPARATE SERVICE: centralizes the provider credentials and every
+// email template in one place, so there's exactly one spot to update
+// sender address, branding, or the email provider itself — instead of
+// that logic being scattered across every API route that needs to
+// notify someone.
 //
 // FAILURE MODE BY DESIGN: the main app always calls these email routes
 // "fire and forget" (the fetch() call's result is only logged on error,
@@ -24,9 +36,9 @@
 // (see the middleware below).
 // ─────────────────────────────────────────────
 const express = require('express');
-const cors = require('cors');
 const dotenv = require('dotenv');
 const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 const path = require('path');
 
 dotenv.config({ path: path.resolve(__dirname, '.env.local') });
@@ -34,12 +46,33 @@ dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 const app = express();
 const PORT = process.env.PORT || 3003;
 
-app.use(cors());
+// No cors() here on purpose: this service is only ever called
+// server-to-server by the main Next.js app (which proxies every
+// client-facing request), never directly from a browser — a browser
+// has no way to supply the x-internal-key header anyway. Leaving CORS
+// off means a cross-origin browser request fails at the preflight
+// stage instead of ever reaching the internal-key check.
 app.use(express.json());
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supportEmail = process.env.ADMIN_EMAIL || "info@layrd.org";
 const fromEmail = process.env.FROM_EMAIL || `LÄYRD <${supportEmail}>`;
+
+// ── Gmail SMTP fallback (used only if both vars below are set) ──
+const useGmail = !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
+const gmailTransporter = useGmail
+  ? nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD, // must be a 16-char Gmail "App Password", not the account login password
+      },
+    })
+  : null;
+
+if (useGmail) {
+  console.log(`[Notifications] Using Gmail SMTP fallback (sending as ${process.env.GMAIL_USER}) — Resend is bypassed while GMAIL_USER/GMAIL_APP_PASSWORD are set.`);
+}
 
 function getAdminEmail() {
   if (process.env.NOTIFICATION_TEST_MODE === 'true') {
@@ -58,15 +91,79 @@ app.use((req, res, next) => {
   next();
 });
 
+// ─────────────────────────────────────────────
+// Rate limiting — in-memory (fine for a single instance). NOTE: the
+// x-forwarded-for seen here is normally the main Next.js app's own
+// address, not the end customer's — this is a backstop against a
+// runaway bug/loop burning through the Resend quota (or someone hitting
+// this service directly with a leaked internal key), not per-customer
+// throttling — see /api/contact and /api/events in the main app for that.
+// ─────────────────────────────────────────────
+const rateLimitStore = new Map();
+function isRateLimited(key, { limit = 30, windowMs = 60 * 1000 } = {}) {
+  const now = Date.now();
+  const timestamps = (rateLimitStore.get(key) || []).filter((t) => now - t < windowMs);
+  if (timestamps.length >= limit) {
+    rateLimitStore.set(key, timestamps);
+    return true;
+  }
+  timestamps.push(now);
+  rateLimitStore.set(key, timestamps);
+  return false;
+}
+setInterval(() => {
+  const now = Date.now();
+  const oneHourMs = 60 * 60 * 1000;
+  for (const [k, timestamps] of rateLimitStore.entries()) {
+    const fresh = timestamps.filter((t) => now - t < oneHourMs);
+    if (fresh.length === 0) rateLimitStore.delete(k);
+    else rateLimitStore.set(k, fresh);
+  }
+}, 10 * 60 * 1000);
+
+app.use((req, res, next) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+  if (isRateLimited(`ip:${ip}`)) {
+    return res.status(429).json({ error: 'Too many requests, please slow down.' });
+  }
+  next();
+});
+
 // Helper for sending or stubbing
 async function sendOrStub(options) {
+  if (useGmail) {
+    try {
+      const info = await gmailTransporter.sendMail({
+        from: `LÄYRD (via Gmail) <${process.env.GMAIL_USER}>`,
+        to: options.to,
+        replyTo: options.replyTo,
+        subject: options.subject,
+        html: options.html,
+      });
+      return { success: true, id: info.messageId };
+    } catch (error) {
+      console.error('[Gmail Error]', error);
+      throw error;
+    }
+  }
+
   if (!process.env.RESEND_API_KEY) {
     console.log(`[EMAIL STUB] Email to ${options.to} (Subject: ${options.subject})`);
     return { success: true };
   }
   try {
-    await resend.emails.send(options);
-    return { success: true };
+    // IMPORTANT: the Resend SDK does NOT throw on API-level failures (bad
+    // key, unverified domain, invalid recipient, etc.) — it resolves with
+    // { data, error }. Ignoring `error` here previously caused every route
+    // to report { success: true } to the caller even when nothing was
+    // actually sent. Check it explicitly and throw so the route below can
+    // surface a real 500 and log what Resend actually said.
+    const { data, error } = await resend.emails.send(options);
+    if (error) {
+      console.error('[Resend Error]', error);
+      throw new Error(error.message || 'Resend API returned an error');
+    }
+    return { success: true, id: data?.id };
   } catch (error) {
     console.error('[Resend Error]', error);
     throw error;

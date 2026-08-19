@@ -15,12 +15,13 @@ import {
   CalendarDays,
   Sparkles,
   Building2,
-  BadgeCheck,
   Tag,
   Clock,
   CircleHelp,
   Settings,
+  Mail,
   ArrowLeft,
+  X
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -31,14 +32,14 @@ const NAV_ITEMS = [
   { href: "/admin/events",         label: "Events",         Icon: CalendarDays },
   { href: "/admin/ai-labels",      label: "AI Labels",      Icon: Sparkles },
   { href: "/admin/wholesale",      label: "Wholesale",      Icon: Building2 },
-  { href: "/admin/business-codes", label: "Business Codes", Icon: BadgeCheck },
   { href: "/admin/promo-codes",    label: "Promo Codes",    Icon: Tag },
   { href: "/admin/availability",   label: "Availability",   Icon: Clock },
+  { href: "/admin/contact",        label: "Contact",        Icon: Mail },
   { href: "/admin/faq",            label: "FAQ",            Icon: CircleHelp },
   { href: "/admin/settings",       label: "Settings",       Icon: Settings },
 ];
 
-export default function AdminSidebar({ onLogout }) {
+export default function AdminSidebar({ onLogout, isOpen, onClose }) {
   const pathname = usePathname();
 
   function isActive(href) {
@@ -47,7 +48,7 @@ export default function AdminSidebar({ onLogout }) {
   }
 
   return (
-    <aside style={{
+    <aside className={`admin-sidebar ${isOpen ? 'open' : ''}`} style={{
       width: "220px",
       flexShrink: 0,
       minHeight: "100vh",
@@ -60,19 +61,22 @@ export default function AdminSidebar({ onLogout }) {
       <div style={{
         padding: "22px 20px 18px",
         borderBottom: "1px solid rgba(232,223,210,0.12)",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
       }}>
+        <div>
         <div style={{
-          fontFamily: "'Cormorant Garamond', serif",
-          fontSize: "1.25rem",
+          fontSize: "24px",
           fontWeight: 700,
           letterSpacing: "0.22em",
           color: "#FAF8F3",
-          lineHeight: 1,
+          lineHeight: "100%",
         }}>
           LÄYRD
         </div>
         <div style={{
-          fontSize: "0.6rem",
+          fontSize: "24px",
           letterSpacing: "0.18em",
           textTransform: "uppercase",
           color: "#77736B",
@@ -80,6 +84,18 @@ export default function AdminSidebar({ onLogout }) {
         }}>
           Admin Panel
         </div>
+        </div>
+        {isOpen && (
+          <button 
+            onClick={onClose}
+            className="md:hidden"
+            style={{
+              background: 'none', border: 'none', color: '#77736B', cursor: 'pointer', padding: '4px'
+            }}
+          >
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {/* ── Nav ── */}
@@ -93,32 +109,32 @@ export default function AdminSidebar({ onLogout }) {
                 alignItems: "center",
                 gap: "10px",
                 padding: "9px 20px",
-                fontSize: "0.82rem",
+                fontSize: "16px",
                 fontWeight: active ? 500 : 400,
-                color: active ? "#FAF8F3" : "#77736B",
-                background: active ? "rgba(184,155,94,0.08)" : "transparent",
-                borderLeft: `2px solid ${active ? "#B89B5E" : "transparent"}`,
+                color: active ? "#FAF8F3" : "#A19D94",
+                background: active ? "rgba(184,155,94,0.12)" : "transparent",
+                borderLeft: `3px solid ${active ? "#B89B5E" : "transparent"}`,
                 transition: "color 0.15s, background 0.15s, border-color 0.15s",
                 cursor: "pointer",
               }}
               onMouseEnter={(e) => {
                 if (!active) {
-                  e.currentTarget.style.color = "#E8DFD2";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                  e.currentTarget.style.color = "#FAF8F3";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
                 }
               }}
               onMouseLeave={(e) => {
                 if (!active) {
-                  e.currentTarget.style.color = "#77736B";
+                  e.currentTarget.style.color = "#A19D94";
                   e.currentTarget.style.background = "transparent";
                 }
               }}
               >
                 <item.Icon
-                  size={15}
-                  strokeWidth={1.5}
+                  size={16}
+                  strokeWidth={active ? 2 : 1.5}
                   style={{
-                    color: active ? "#B89B5E" : "#77736B",
+                    color: active ? "#B89B5E" : "#A19D94",
                     flexShrink: 0,
                   }}
                 />
@@ -137,10 +153,9 @@ export default function AdminSidebar({ onLogout }) {
         flexDirection: "column",
         gap: "8px",
       }}>
-        {/* Back to store */}
         <Link href="/" style={{ display: "block" }}>
           <div style={{
-            fontSize: "0.75rem",
+            fontSize: "14px",
             color: "#77736B",
             display: "flex",
             alignItems: "center",

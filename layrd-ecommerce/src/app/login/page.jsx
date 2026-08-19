@@ -1,70 +1,124 @@
 "use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+// ─────────────────────────────────────────────
+// LÄYRD – Login page (/login)
+// ─────────────────────────────────────────────
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { signIn } from "@/lib/auth";
+import { BRAND } from "../../lib/constants.js";
+import { signIn } from "../../lib/auth.js";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Page() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+function LoginForm() {
+  const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  async function handleSubmit(e) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  async function handleLogin(e) {
     e.preventDefault();
-    setError("");
     setLoading(true);
-    try {
-      await signIn({ email, password });
-      router.push("/");
-    } catch (err) {
-      setError(
-        err.message === "Invalid login credentials"
-          ? "Incorrect email or password."
-          : err.message || "Something went wrong. Please try again."
-      );
-    } finally {
-      setLoading(false);
+    setError("");
+
+    const { error: signInError } = await signIn({ email: form.email, password: form.password });
+
+    if (signInError) {
+      setError(signInError.message || "Failed to sign in. Check your credentials.");
+    } else {
+      import("../../lib/auth.js").then(async ({ getCurrentUser }) => {
+        const user = await getCurrentUser();
+        if (user?.profile?.role === "admin") {
+          // If AdminAuthGuard bounced them here from a specific admin page
+          // (e.g. ?next=/admin/wholesale), send them back there instead of
+          // always landing on the dashboard.
+          const nextUrl = searchParams.get("next");
+          const isSafeAdminPath = nextUrl && nextUrl.startsWith("/admin/") && !nextUrl.startsWith("//");
+          router.push(isSafeAdminPath ? nextUrl : "/admin");
+        } else {
+          router.push("/");
+        }
+      });
     }
+
+    setLoading(false);
   }
 
   return (
-    <div className="container" style={{ maxWidth: "420px", padding: "80px 24px" }}>
-      <h1>Log In</h1>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email">EMAIL</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+    <div
+      style={{
+        minHeight: "calc(100vh - 72px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "40px 24px",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "420px",
+          background: "var(--bg-card)",
+          border: "1px solid var(--border)",
+          borderRadius: "4px",
+          padding: "48px 40px",
+        }}
+      >
+        {/* Logo */}
+        <div style={{ textAlign: "center", marginBottom: "36px" }}>
+          <Link href="/">
+            <span style={{ fontSize: "clamp(26px, 4vw, 48px)", fontWeight: 700, letterSpacing: "0.25em", color: "var(--color-cream)" }}>
+              {BRAND.name}
+            </span>
+          </Link>
+          <p style={{ fontSize: "16px", color: "var(--color-sand)", marginTop: "6px", letterSpacing: "0.1em" }}>
+            Sign in to your account
+          </p>
         </div>
-        <div>
-          <label htmlFor="password">PASSWORD</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
 
-        {error && <p style={{ color: "var(--danger, red)" }}>{error}</p>}
+        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          <div>
+            <label className="label">Email</label>
+            <input className="input" type="email" required placeholder="you@example.com"
+              value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          </div>
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+              <label className="label" style={{ margin: 0 }}>Password</label>
+              <Link href="/reset-password" style={{ fontSize: "14px", color: "#2563EB", textDecoration: "underline" }}>
+                Forgot password?
+              </Link>
+            </div>
+            <input className="input" type="password" required placeholder="••••••••"
+              value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Log In"}
-        </button>
-      </form>
+          {error && (
+            <p style={{ fontSize: "16px", color: "#f87171", background: "rgba(239,68,68,0.08)", padding: "10px 14px", borderRadius: "3px", border: "1px solid rgba(239,68,68,0.15)" }}>
+              {error}
+            </p>
+          )}
 
-      <p>
-        Don't have an account? <Link href="/signup">Create one</Link>
-      </p>
+          <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: "100%", marginTop: "4px" }}>
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+        </form>
+
+        <div className="divider" />
+
+        <p style={{ textAlign: "center", fontSize: "16px", color: "var(--color-sand)" }}>
+          Don't have an account?{" "}
+          <Link href="/signup" style={{ color: "#2563EB", textDecoration: "underline" }}>Create one</Link>
+        </p>
+      </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

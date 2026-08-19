@@ -1,90 +1,111 @@
-// src/lib/admin-order-items.js
+"use server";
+// ─────────────────────────────────────────────
+// LÄYRD – admin-order-items.js
+// Server-side service layer for order line items.
+// Used to calculate committed inventory stock.
+// Every function requires a valid admin access token as its first
+// argument — see requireAdmin() in admin-server-auth.js for why.
 //
-// WHY this file now queries Supabase directly instead of using mock data:
-// per backend-schema.md, we already have a `committed_order_items` VIEW
-// that does the Cancelled/Refunded filtering at the DATABASE level — no
-// need to reimplement that filtering logic in JS anymore.
-
+// Stock calculation rule:
+//   COMMITTED statuses = New | Paid | Pending Payment | Preparing |
+//                        Ready for Pickup | Out for Delivery | Completed
+//   NOT committed = Cancelled | Refunded
+//   NOT committed = Event inquiries (until Adam approves them)
+// ─────────────────────────────────────────────
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { requireAdmin } from "@/lib/admin-server-auth";
+import { COMMITTED_STATUSES } from "./order-items-options.js";
 
-// Kept for reference/backward compatibility — the real filtering now
-// happens via the committed_order_items SQL view (backend-schema.md),
-// not via this JS constant, but other files may still reference it.
-export const COMMITTED_STATUSES = [
-  "New",
-  "Paid",
-  "Pending Payment",
-  "Preparing",
-  "Ready for Pickup",
-  "Out for Delivery",
-  "Completed",
-];
-export const EXCLUDED_STATUSES = ["Cancelled", "Refunded"];
+// ── Field mapping ────────────────────────────
+// Maps a raw DB row (joined with orders) into the shape
+// that calculateStock() in admin-inventory.js expects.
+// Real schema: name, flavour, size (already plain text e.g. "250ml"),
+// category, unit_price — no product_name or size_ml columns exist.
 
-/**
- * Get all order items, each annotated with its parent order's status.
- * WHY the join: admin-inventory.js's calculateStock() (next step) needs
- * to know each item's order status to decide what counts as committed.
- */
-export async function getOrderItems() {
+// Some historical orders (from before checkout/route.js normalized this on
+// write, or from an older code path) stored size as a bare number ("250")
+// instead of "250ml". calculateStock() in inventory-options.js groups by
+// exact flavour+size+category string, so a bare "250" silently created a
+// second, permanent stock line for the same real-world size — normalizing
+// here means every existing order retroactively merges into the correct
+// line without needing to touch the historical order records themselves.
+function normalizeSize(size) {
+  if (size == null) return null;
+  const str = String(size).trim();
+  return /^\d+$/.test(str) ? `${str}ml` : str;
+}
+
+function dbToJs(row) {
+  return {
+    id:          row.id,
+    orderId:     row.order_id,
+    flavour:     row.flavour || row.name,
+    size:        normalizeSize(row.size),
+    category:    row.category || "cake",
+    quantity:    row.quantity,
+    orderStatus: row.orders?.status ?? null,
+    productName: row.name,
+    unitPrice:   row.unit_price,
+    sweetness:   row.sweetness ?? null,
+  };
+}
+
+// ── Queries ───────────────────────────────────
+
+export async function getOrderItems(accessToken) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("order_items")
-    .select("*, orders(status)");
+    .select("*, orders!inner(status)")
+    .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("admin-order-items.js: getOrderItems failed:", error.message);
+    console.error("[OrderItems] Error fetching order items:", error.message);
     return [];
   }
-
-  // WHY we flatten orders.status onto each item here: the OLD mock shape
-  // had orderStatus directly on each item object (not nested under a
-  // separate `orders` key) — flattening keeps admin-inventory.js's
-  // calculateStock() working without needing changes to ITS logic.
-  return data.map((item) => ({
-    id: item.id,
-    orderId: item.order_id,
-    flavour: item.flavour,
-    size: item.size,
-    category: item.category,
-    quantity: item.quantity,
-    orderStatus: item.orders?.status,
-  }));
+  return (data ?? []).map(dbToJs);
 }
 
 /**
- * Update all order_items belonging to an order to reflect a NEW order
- * status. WHY this exists even though order_items doesn't store its own
- * status column: kept for interface compatibility with the old mock
- * version — in the real schema, order_items.orders(status) already
- * reflects the CURRENT status via the join above (since it's the orders
- * table's status, not a copy). This function is now effectively a no-op
- * pass-through, since updateOrderStatus() in admin-orders.js is what
- * actually updates orders.status in Supabase.
+ * Get committed order items (those that lock inventory stock).
+ * Filters in JS after fetching — PostgREST joined-column filtering
+ * can be unreliable across versions.
  */
-export function updateOrderItemsStatus(orderId, newStatus) {
-  // Intentionally does nothing — order_items has no separate status field
-  // to update. Status lives on the parent `orders` row only. Kept as a
-  // no-op function so admin-orders.js's updateOrderStatus() can still call
-  // it without needing to know this detail, in case it's useful later
-  // (e.g. logging).
-}
+export async function getCommittedItems(accessToken) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
 
-/**
- * Get only COMMITTED order items — i.e. those counted against available
- * stock. Uses the committed_order_items SQL VIEW (backend-schema.md),
- * which already excludes Cancelled/Refunded orders at the database level.
- */
-export async function getCommittedItems() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("committed_order_items")
-    .select("*");
+    .from("order_items")
+    .select("*, orders!inner(status)");
 
   if (error) {
-    console.error("admin-order-items.js: getCommittedItems failed:", error.message);
+    console.error("[OrderItems] Error fetching committed items:", error.message);
     return [];
   }
 
-  return data;
+  return (data ?? [])
+    .filter((row) => COMMITTED_STATUSES.includes(row.orders?.status))
+    .map(dbToJs);
+}
+
+export async function getItemsForOrder(accessToken, orderId) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("order_items")
+    .select("*, orders!inner(status)")
+    .eq("order_id", orderId);
+
+  if (error) {
+    console.error("[OrderItems] Error fetching items for order:", error.message);
+    return [];
+  }
+  return (data ?? []).map(dbToJs);
 }

@@ -1,36 +1,40 @@
 "use client";
 // ─────────────────────────────────────────────
 // LÄYRD – AdminAuthGuard
-// Redirects unauthenticated users to /admin/login.
+// Uses the SAME Supabase Auth session as the customer /login page.
+// Redirects to /login (not a separate admin login) if there's no
+// session, or if the logged-in user's profile role isn't "admin".
 // Wrap any protected admin page content with this.
 // ─────────────────────────────────────────────
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { isAdminLoggedIn } from "@/lib/admin-auth";
+import { useRouter, usePathname } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
 
 export default function AdminAuthGuard({ children }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    // WHY this needs to be its own async function: isAdminLoggedIn() is an
-    // async function (it awaits a Supabase session lookup + a profiles query),
-    // so calling it returns a Promise. The old code did `if (!isAdminLoggedIn())`
-    // which checked the truthiness of the Promise OBJECT itself (always true),
-    // never the resolved boolean inside it — meaning this guard was never
-    // actually blocking anyone. We must await the real result before deciding.
     async function checkAuth() {
-      const loggedIn = await isAdminLoggedIn();
-      if (!loggedIn) {
-        router.replace("/admin/login");
-      } else {
-        setChecked(true);
+      const user = await getCurrentUser();
+      if (!user) {
+        if (pathname && pathname.startsWith("/admin/")) {
+          router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+        } else {
+          router.replace("/login");
+        }
+        return;
       }
+      if (user.profile?.role !== "admin") {
+        router.replace("/");
+        return;
+      }
+      setChecked(true);
     }
     checkAuth();
   }, [router]);
 
-  // Avoid flash of content before redirect
   if (!checked) {
     return (
       <div style={{
@@ -48,7 +52,6 @@ export default function AdminAuthGuard({ children }) {
           borderRadius: "50%",
           animation: "spin 0.7s linear infinite",
         }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }

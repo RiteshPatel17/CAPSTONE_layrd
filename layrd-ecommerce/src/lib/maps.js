@@ -1,118 +1,157 @@
+// ─────────────────────────────────────────────
+// LÄYRD – OpenRouteService Distance Matrix
+// (Local fallback — only used if delivery-fee-service is unreachable)
+// ─────────────────────────────────────────────
 
-const ORS_API_KEY = process.env.OPENROUTESERVICE_API_KEY;
+// Pickup origin (Pineridge NE, Calgary) – exact address stored in admin settings
+const DEFAULT_ORIGIN = process.env.PICKUP_ORIGIN_ADDRESS || "336 Pinewind Close NE, Calgary, AB";
 
+// Same Calgary bounding box used by delivery-fee-service's autocomplete —
+// without it, a plain street name with no city/province in the text (e.g.
+// "17 Ave") can resolve to a same-named street in a different city entirely.
+const CALGARY_BOUNDS = { minLon: -114.35, minLat: 50.80, maxLon: -113.80, maxLat: 51.25 };
+const CALGARY_FOCUS = { lon: -114.0719, lat: 51.0447 };
 
-const PICKUP_ORIGIN_ADDRESS = process.env.PICKUP_ORIGIN_ADDRESS;
+// The pickup origin never changes at runtime, so geocode it once and reuse
+// the result — cuts one external API round-trip off every request.
+let cachedOriginData = null;
+let cachedOriginPromise = null;
 
-
-const CALGARY_RADIUS_KM = 40;
-
-
-const MOCK_FALLBACK = {
-  distanceKm: 8,
-  durationMin: 15,
-  isWithinCalgary: true,
-  isMock: true, // lets the UI show "(estimated)" next to the fee if we want
-};
-
-
-async function geocodeAddress(address) {
-  const url = `https://api.heigit.org/pelias/v1/search` +
-    `?api_key=${ORS_API_KEY}` +
-    `&text=${encodeURIComponent(address)}` +
-    `&size=1` +
-    `&boundary.country=CA` +
-    `&focus.point.lat=51.08` +
-    `&focus.point.lon=-114.08`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Geocoding request failed with status ${res.status}`);
+async function getOriginData(origin) {
+  if (cachedOriginData) return cachedOriginData;
+  if (!cachedOriginPromise) {
+    cachedOriginPromise = geocodeAddress(origin)
+      .then((data) => {
+        cachedOriginData = data;
+        return data;
+      })
+      .catch((err) => {
+        cachedOriginPromise = null; // allow a retry on the next request if this failed
+        throw err;
+      });
   }
-
-  const data = await res.json();
-
-  
-  const feature = data.features?.[0];
-  if (!feature) {
-    // No results = address couldn't be found/understood by the geocoder
-    throw new Error(`No geocoding results found for address: ${address}`);
-  }
-
-  const [lon, lat] = feature.geometry.coordinates;
-  return { lat, lon };
+  return cachedOriginPromise;
 }
 
 /**
- * Calculates real driving distance between the fixed pickup origin and a
- * customer's delivery address.
- *
- * @param {string} destinationAddress - Customer's typed delivery address
- * @returns {Promise<{distanceKm: number, durationMin: number, isWithinCalgary: boolean, isMock?: boolean}>}
+ * Helper to geocode an address into coordinates, restricted to Calgary
  */
-export async function getDeliveryDistance(destinationAddress) {
-  
-  if (!ORS_API_KEY || !PICKUP_ORIGIN_ADDRESS) {
-    console.error(
-      "maps.js: Missing OPENROUTESERVICE_API_KEY or PICKUP_ORIGIN_ADDRESS env var — falling back to mock distance."
-    );
-    return MOCK_FALLBACK;
+async function geocodeAddress(address) {
+  const apiKey = process.env.OPENROUTESERVICE_API_KEY;
+  if (!apiKey) throw new Error("OPENROUTESERVICE_API_KEY is not set.");
+
+  const url = `https://api.heigit.org/pelias/v1/search?api_key=${apiKey}&text=${encodeURIComponent(address)}` +
+    `&boundary.rect.min_lon=${CALGARY_BOUNDS.minLon}&boundary.rect.min_lat=${CALGARY_BOUNDS.minLat}` +
+    `&boundary.rect.max_lon=${CALGARY_BOUNDS.maxLon}&boundary.rect.max_lat=${CALGARY_BOUNDS.maxLat}` +
+    `&focus.point.lon=${CALGARY_FOCUS.lon}&focus.point.lat=${CALGARY_FOCUS.lat}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Geocoding failed: ${res.status} ${res.statusText}`);
+
+  const data = await res.json();
+  if (!data.features || data.features.length === 0) {
+    throw new Error(`Address not found: ${address}`);
   }
 
+  // Return the first match's coordinates and properties
+  return {
+    coords: data.features[0].geometry.coordinates, // [lon, lat]
+    properties: data.features[0].properties
+  };
+}
+
+/**
+ * Calculate driving distance (km) from pickup to customer address.
+ * geocodeAddress() is bounded to the Calgary rectangle, so a successful
+ * match is guaranteed to be inside Calgary, and a failure genuinely means
+ * the address isn't there (rather than a reason to guess a random distance).
+ * @param {string} destination – customer's full address
+ * @param {string} [origin] – override pickup address (from admin settings)
+ * @returns {Promise<{ distanceKm: number, durationMin: number, isWithinCalgary: boolean, isMock: boolean, message?: string }>}
+ */
+export async function getDeliveryDistance(destination, origin = DEFAULT_ORIGIN) {
   try {
-    // Step 1: geocode both addresses into coordinate pairs
-    const origin = await geocodeAddress(PICKUP_ORIGIN_ADDRESS);
-    const destination = await geocodeAddress(destinationAddress);
+    const apiKey = process.env.OPENROUTESERVICE_API_KEY;
+    if (!apiKey) throw new Error("OPENROUTESERVICE_API_KEY is not set.");
 
+    // 1. Geocode both addresses (both bounded to Calgary)
+    const originData = await getOriginData(origin);
+    const destData = await geocodeAddress(destination);
 
-    // Step 2: call the ORS Matrix API for real driving distance/duration.
-    // WHY Matrix API (not Directions API): Matrix is built for exactly this
-    // "distance between two points" use case and returns simpler output.
-    // Even though we only have ONE origin and ONE destination (not a true
-    // matrix of many-to-many), the API still works fine for a 1x1 case.
-    const matrixUrl = "https://api.heigit.org/openrouteservice/v2/matrix/driving-car";
+    // 2. Format coordinates for directions API: start=lon,lat&end=lon,lat
+    const startCoords = `${originData.coords[0]},${originData.coords[1]}`;
+    const endCoords = `${destData.coords[0]},${destData.coords[1]}`;
 
-    const matrixRes = await fetch(matrixUrl, {
-      method: "POST",
-      headers: {
-        Authorization: ORS_API_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        // ORS also expects [lon, lat] order for locations, matching geocoding output
-        locations: [
-          [origin.lon, origin.lat],
-          [destination.lon, destination.lat],
-        ],
-        // Explicitly tell ORS which indexes are sources/destinations —
-        // index 0 = pickup origin, index 1 = customer address
-        sources: [0],
-        destinations: [1],
-        metrics: ["distance", "duration"],
-        units: "km",
-      }),
-    });
-    
-    if (!matrixRes.ok) {
-      throw new Error(`Matrix API request failed with status ${matrixRes.status}`);
+    // 3. Call Directions API
+    // NOTE: api.openrouteservice.org was deprecated (started returning 403)
+    // and migrated to api.heigit.org — verified live 2026-08-19 (both this
+    // endpoint and the geocode one above return real, correctly-shaped
+    // responses with the current OPENROUTESERVICE_API_KEY).
+    const dirUrl = `https://api.heigit.org/openrouteservice/v2/directions/driving-car?api_key=${apiKey}&start=${startCoords}&end=${endCoords}`;
+    const res = await fetch(dirUrl);
+    if (!res.ok) throw new Error(`Directions API failed: ${res.status} ${res.statusText}`);
+
+    const dirData = await res.json();
+    if (!dirData.features || dirData.features.length === 0) {
+      throw new Error(`No route found between ${origin} and ${destination}`);
     }
-    const matrixData = await matrixRes.json();
 
-    // distances/durations come back as a 2D array: [sources][destinations]
-    // Since we only asked for 1 source and 1 destination, this is [0][0]
-    const distanceKm = matrixData.distances?.[0]?.[0];
-    const durationSeconds = matrixData.durations?.[0]?.[0];
+    const summary = dirData.features[0].properties.summary;
+    const distanceKm = summary.distance / 1000;
+    const durationMin = summary.duration / 60;
 
-    if (distanceKm === undefined || distanceKm === null) {
-      throw new Error("Matrix API returned no distance data");
-    }
+    console.log(`[MAPS API] Distance to "${destination}": ${distanceKm.toFixed(1)} km`);
 
     return {
-      distanceKm: Math.round(distanceKm * 10) / 10, // round to 1 decimal place
-      durationMin: Math.round(durationSeconds / 60),
-      isWithinCalgary: distanceKm <= CALGARY_RADIUS_KM,
+      distanceKm: parseFloat(distanceKm.toFixed(1)),
+      durationMin: Math.ceil(durationMin),
+      isWithinCalgary: true, // guaranteed by the bounding box on geocoding above
+      isMock: false
     };
-  } catch (err) {
-    console.error("maps.js: getDeliveryDistance failed, falling back to mock:", err.message);
-    return MOCK_FALLBACK;
+
+  } catch (error) {
+    console.error("[MAPS API ERROR]", error);
+
+    // A bounded geocode failure genuinely means "not in Calgary" (or a typo)
+    if (error.message && error.message.startsWith("Address not found")) {
+      return {
+        distanceKm: 0,
+        durationMin: 0,
+        isWithinCalgary: false,
+        isMock: false,
+        message: "We couldn't find that address in Calgary. Please check it and try again.",
+      };
+    }
+
+    // Any other failure (network hiccup, directions API down, etc.) — fall
+    // back to a fixed mid-tier estimate so checkout isn't fully blocked. A
+    // *random* distance here would mean two customers hitting the same
+    // outage could be charged wildly different, arbitrary delivery fees;
+    // a fixed estimate is at least predictable and fair, and isMock still
+    // surfaces to the customer as "(estimated)" either way.
+    const mockDistanceKm = 15;
+    const mockDurationMin = Math.floor(mockDistanceKm * 2.5);
+
+    console.log(`[MAPS API STUB] Distance to "${destination}": ${mockDistanceKm} km (Fallback)`);
+
+    return {
+      distanceKm: mockDistanceKm,
+      durationMin: mockDurationMin,
+      isWithinCalgary: true,
+      isMock: true
+    };
+  }
+}
+
+/**
+ * Check if an address is within Calgary (bounded geocode succeeds or not)
+ * @param {string} address
+ */
+export async function isWithinCalgary(address) {
+  try {
+    await geocodeAddress(address);
+    return true; // geocodeAddress() only returns matches inside Calgary
+  } catch (error) {
+    console.error("[MAPS GEOCODE ERROR]", error);
+    return false;
   }
 }

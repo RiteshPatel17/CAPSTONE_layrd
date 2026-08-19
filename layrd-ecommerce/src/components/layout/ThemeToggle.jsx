@@ -46,11 +46,12 @@ export default function ThemeToggle() {
       className="theme-toggle"
       aria-label={theme === "day" ? "Switch to night mode" : "Switch to day mode"}
       title={theme === "day" ? "Night mode" : "Day mode"}
+      suppressHydrationWarning
     >
       {/* Show Moon when in day mode (click → go dark); Sun when in night mode */}
       {theme === "day"
-        ? <Moon size={15} strokeWidth={1.5} />
-        : <Sun  size={15} strokeWidth={1.5} />
+        ? <Moon size={24} strokeWidth={1.5} />
+        : <Sun  size={24} strokeWidth={1.5} />
       }
     </button>
   );

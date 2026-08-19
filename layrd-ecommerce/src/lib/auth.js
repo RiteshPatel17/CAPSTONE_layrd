@@ -1,69 +1,129 @@
-import { supabase } from './supabase';
+// ─────────────────────────────────────────────
+// LÄYRD – Auth utilities
+// Wired to Supabase Auth
+// ─────────────────────────────────────────────
+import { supabase } from "./supabase.js";
 
-// Register a new customer account.
-// On success, Supabase Auth creates the user, and the `handle_new_user()`
-// trigger (see backend-schema.md) auto-creates a matching `profiles` row.
-export async function signUp({ email, password, fullName }) {
+/**
+ * Sign up a new user
+ * @param {{ email: string, password: string, fullName: string, role?: string }} params
+ */
+export async function signUp({ email, password, fullName, role = "customer" }) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      data: { full_name: fullName }, // read by handle_new_user() trigger
-    },
+    options: { 
+      data: { 
+        full_name: fullName, 
+        role: role 
+      } 
+    }
   });
-  if (error) throw error;
-  return data; // { user, session }
+  
+  if (error) {
+    console.error("[AUTH] Sign up error:", error);
+  }
+  return { data, error };
 }
 
-// Log in an existing customer.
+/**
+ * Sign in a user
+ * @param {{ email: string, password: string }} params
+ */
 export async function signIn({ email, password }) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
-  if (error) throw error;
-  return data; // { user, session }
+  
+  if (error) {
+    console.error("[AUTH] Sign in error:", error);
+  }
+  return { data, error };
 }
 
-// Log out the current user.
+/**
+ * Sign out current user
+ */
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
-  if (error) throw error;
+  if (error) {
+    console.error("[AUTH] Sign out error:", error);
+  }
+  return { error };
 }
 
-// Get the currently logged-in user (or null). Use in client components
-// that need to check auth state on mount.
+/**
+ * Get current session / user
+ */
 export async function getCurrentUser() {
-  const { data, error } = await supabase.auth.getUser();
-  if (error) return null;
-  return data.user;
-}
-
-// Get the current session (includes JWT). Useful for checking if a
-// session exists without a full user round-trip.
-export async function getSession() {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) return null;
-  return data.session;
-}
-
-// Fetch the full profile row (role, full_name, phone) for a given user ID.
-// Needed anywhere we need to check role (e.g. 'business' pricing, admin checks).
-export async function getProfile(userId) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  
+  // Also fetch their profile to get their role
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
     .single();
-  if (error) return null;
-  return data;
+    
+  return { ...user, profile };
 }
 
-// Subscribe to auth state changes (login/logout/token refresh).
-// Returns an unsubscribe function — call it in a useEffect cleanup.
-export function onAuthStateChange(callback) {
-  const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-    callback(event, session);
+/**
+ * Check if current user is admin
+ */
+export async function isAdmin() {
+  const user = await getCurrentUser();
+  return user?.profile?.role === "admin";
+}
+
+/**
+ * Returns an Authorization header for the current Supabase session,
+ * or {} if there's no active session. Spread this into fetch() headers
+ * when calling admin-protected API routes (see admin-server-auth.js).
+ *   const headers = { "Content-Type": "application/json", ...(await getAuthHeader()) };
+ */
+export async function getAuthHeader() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) return {};
+  return { Authorization: `Bearer ${session.access_token}` };
+}
+
+/**
+ * Check if current user is business account
+ */
+export async function isBusinessUser() {
+  const user = await getCurrentUser();
+  return user?.profile?.role === "business" || user?.profile?.role === "admin";
+}
+
+/**
+ * Reset password for email
+ * @param {string} email
+ */
+export async function resetPasswordForEmail(email) {
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password-confirm`,
   });
-  return () => listener.subscription.unsubscribe();
+  
+  if (error) {
+    console.error("[AUTH] Reset password error:", error);
+  }
+  return { data, error };
+}
+
+/**
+ * Update password (used after redirecting from reset email)
+ * @param {string} newPassword
+ */
+export async function updatePassword(newPassword) {
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword
+  });
+  
+  if (error) {
+    console.error("[AUTH] Update password error:", error);
+  }
+  return { data, error };
 }

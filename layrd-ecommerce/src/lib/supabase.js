@@ -1,18 +1,35 @@
-import { createClient } from '@supabase/supabase-js';
+// ─────────────────────────────────────────────
+// LÄYRD – Supabase client
+// Real client using @supabase/supabase-js.
+// Keys are read from .env.local (NEXT_PUBLIC_SUPABASE_URL / ANON_KEY / SERVICE_ROLE_KEY).
+// ─────────────────────────────────────────────
+import { createClient } from "@supabase/supabase-js";
 
-// Client-side Supabase client — safe to use in browser/client components.
-// Uses the anon key; all access is governed by Row Level Security (RLS) policies.
+const supabaseUrl     = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error(
+    "[Supabase] Missing env vars: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY"
+  );
+}
+
+// ── Public / browser client (uses anon key, respects Row Level Security) ──
+// Falls back to placeholders so a missing env var fails at the point of
+// use (a clear Supabase error) instead of crashing on import.
 export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-anon-key"
 );
 
-// Server-only admin client — uses the service role key, which BYPASSES RLS entirely.
-// NEVER import this from a client component ("use client" file).
-// Only call this from Next.js API routes (src/app/api/**/route.js).
+// ── Server-side admin client (uses service role key — server/API routes only!) ──
+// NEVER import this in client components.
 export function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey) {
+    throw new Error("[Supabase] Missing SUPABASE_SERVICE_ROLE_KEY env var — refusing to fall back to the anon client for an admin operation.");
+  }
+  return createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 }

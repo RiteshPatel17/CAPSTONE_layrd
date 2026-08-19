@@ -1,59 +1,94 @@
-// src/app/api/delivery-fee/route.js
-//
-// WHY this route exists (per TRD 12, PRD FR-05, API spec):
-// /checkout needs to convert a customer-typed address into a real distance
-// and delivery fee. The actual distance/geocoding logic lives in maps.js,
-// and fee-tier math lives in pricing.js (per TRD 4.3 service layer pattern)
-// — this route's ONLY job is to call both and shape the response into what
-// checkout/page.jsx expects: { distanceKm, fee, isWithinCalgary, isMock? }
-
-import { getDeliveryDistance } from "@/lib/maps";
-import { getDeliveryFee } from "@/lib/pricing";
+// ─────────────────────────────────────────────
+// LÄYRD – API: Delivery Fee (/api/delivery-fee)
+// Calculates delivery fee based on customer address, or lat/lon
+// coordinates when the address was picked from autocomplete.
+// ─────────────────────────────────────────────
+import { NextResponse } from "next/server";
+import { getDeliveryDistance as calculateDeliveryFeeLocalFallback } from "../../../lib/maps.js";
+import { getDeliveryFee } from "../../../lib/pricing.js";
+import { isRateLimited } from "../../../lib/rate-limit.js";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const address = searchParams.get("address");
+  const lat = searchParams.get("lat");
+  const lon = searchParams.get("lon");
+  const label = searchParams.get("label");
 
-  // WHY validate here rather than trusting the client: even though
-  // checkout/page.jsx already checks `!address.trim()` before calling this,
-  // API routes should never assume the caller validated correctly — someone
-  // could hit this endpoint directly with no address param.
-  if (!address || !address.trim()) {
-    return Response.json(
-      { error: "Missing required 'address' query parameter" },
-      { status: 400 }
-    );
+  if (!address && !(lat && lon)) {
+    return NextResponse.json({ error: "Address or coordinates are required" }, { status: 400 });
+  }
+
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (isRateLimited(`delivery-fee:${ip}`, { limit: 20, windowMs: 60 * 1000 })) {
+    return NextResponse.json({ error: "Too many requests, please slow down." }, { status: 429 });
   }
 
   try {
-    // getDeliveryDistance() already has its OWN internal try/catch and mock
-    // fallback (per TRD 11.3) — if OpenRouteService fails or the address
-    // can't be geocoded, it returns the mock 8km result instead of throwing.
-    // So this call itself should essentially never throw.
-    const { distanceKm, durationMin, isWithinCalgary, isMock } =
-      await getDeliveryDistance(address);
+    const microserviceUrl = process.env.DELIVERY_SERVICE_URL;
+    const internalKey = process.env.INTERNAL_SERVICE_KEY;
+    let useFallback = false;
 
-    // getDeliveryFee() reads from pricing.js's in-memory settings cache
-    // (loaded once via loadPricingSettings() in Providers.jsx on app start)
-    const fee = getDeliveryFee(distanceKm);
+    const qs = new URLSearchParams();
+    if (address) qs.set("address", address);
+    if (lat && lon) {
+      qs.set("lat", lat);
+      qs.set("lon", lon);
+    }
+    if (label) qs.set("label", label);
 
-    return Response.json({
-      distanceKm,
-      durationMin,
-      fee,
-      isWithinCalgary,
-      isMock: isMock || false,
-    });
-  } catch (err) {
-    // WHY this catch still exists despite maps.js already having its own:
-    // defensive layering — if something unexpected happens (e.g. pricing.js
-    // settings cache is somehow in a bad state), we still don't want to
-    // send a raw 500 with a stack trace to the client. Log server-side,
-    // return a clean error to the frontend instead.
-    console.error("/api/delivery-fee: unexpected error:", err.message);
-    return Response.json(
-      { error: "Failed to calculate delivery fee" },
-      { status: 500 }
-    );
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+      const msRes = await fetch(`${microserviceUrl}/api/delivery-fee?${qs.toString()}`, {
+        headers: {
+          'x-internal-key': internalKey
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!msRes.ok) {
+        throw new Error(`Microservice responded with ${msRes.status}`);
+      }
+
+      const msData = await msRes.json();
+      return NextResponse.json(msData);
+    } catch (msError) {
+      console.warn(`[WARNING] delivery-fee-service unreachable, using local fallback. Error: ${msError.message}`);
+      useFallback = true;
+    }
+
+    if (useFallback) {
+      // Local fallback only understands full address text, so use whichever
+      // text we have (typed address, or the label of the selected suggestion).
+      const fallbackAddress = address || label || "";
+      const distanceData = await calculateDeliveryFeeLocalFallback(fallbackAddress);
+
+      if (!distanceData.isWithinCalgary) {
+        return NextResponse.json({
+          isWithinCalgary: false,
+          distanceKm: distanceData.distanceKm,
+          fee: 0,
+          message: distanceData.message || "Outside Calgary – pickup only",
+        });
+      }
+
+      const fee = getDeliveryFee(distanceData.distanceKm);
+
+      return NextResponse.json({
+        isWithinCalgary: true,
+        distanceKm: distanceData.distanceKm,
+        durationMin: distanceData.durationMin,
+        fee,
+        isMock: distanceData.isMock || false,
+      });
+    }
+
+  } catch (error) {
+    console.error("Delivery fee error:", error);
+    return NextResponse.json({ error: "Failed to calculate delivery fee" }, { status: 500 });
   }
 }

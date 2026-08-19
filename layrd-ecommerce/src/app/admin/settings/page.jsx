@@ -1,196 +1,257 @@
 "use client";
 // ─────────────────────────────────────────────
 // LÄYRD – Admin Settings (/admin/settings)
-// Store configuration: contact info, pickup details, GST rate, delivery.
-// Persists to Supabase via /api/admin/settings (GET + PATCH).
+// Store-wide settings: contact info, pickup, GST, delivery tiers.
+// Controlled form — changes update local state on Save.
+// Persists to Supabase via updateSettings() in src/lib/admin-settings.js
 // ─────────────────────────────────────────────
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminFormField from "@/components/admin/AdminFormField";
+import { getSettings, updateSettings } from "@/lib/admin-settings";
+import { supabase } from "@/lib/supabase";
+
+async function getAccessToken() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
+}
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [saving, setSaving]     = useState(false);
-  const [saveStatus, setSaveStatus] = useState(null); // 'success' | 'error' | null
+  const [toast, setToast] = useState(null); // "saved" | "error"
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadSettings() {
-      const res = await fetch("/api/admin/settings");
-      const data = await res.json();
-      setSettings(data.settings);
+    async function load() {
+      const data = await getSettings();
+      setSettings(data);
       setLoading(false);
     }
-    loadSettings();
+    load();
   }, []);
 
-  // Generic field updater — works for any top-level settings key.
-  function updateField(key, value) {
+  function handleField(key, value) {
     setSettings((prev) => ({ ...prev, [key]: value }));
-    setSaveStatus(null); // clear any previous save confirmation once the user edits again
   }
 
-  // WHY delivery tiers get their own updater instead of reusing updateField:
-  // deliveryTiers is an ARRAY of {maxKm, fee} objects, not a flat value —
-  // editing one tier means replacing just that entry within the array,
-  // not the whole field.
-  function updateTier(index, key, value) {
-    setSettings((prev) => {
-      const tiers = [...prev.deliveryTiers];
-      tiers[index] = { ...tiers[index], [key]: Number(value) };
-      return { ...prev, deliveryTiers: tiers };
-    });
-    setSaveStatus(null);
+  function handleTierFee(index, value) {
+    const updated = settings.deliveryTiers.map((t, i) =>
+      i === index ? { ...t, fee: Number(value) } : t
+    );
+    setSettings((prev) => ({ ...prev, deliveryTiers: updated }));
   }
 
   async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
-    setSaveStatus(null);
-
     try {
-      const res = await fetch("/api/admin/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
-      });
-
-      if (!res.ok) throw new Error("Save failed");
-
-      const data = await res.json();
-      setSettings(data.settings); // reflect exactly what the DB now holds
-      setSaveStatus("success");
-    } catch (err) {
-      console.error("admin/settings: save failed:", err.message);
-      setSaveStatus("error");
-    } finally {
-      setSaving(false);
+      const accessToken = await getAccessToken();
+      await updateSettings(accessToken, settings);
+      setToast("saved");
+    } catch (error) {
+      console.error(error);
+      setToast("error");
     }
+    setSaving(false);
+    setTimeout(() => setToast(null), 3000);
   }
 
-  if (loading || !settings) {
-    return (
-      <AdminLayout title="Settings" subtitle="Loading...">
-        <div style={{ textAlign: "center", padding: "60px", color: "var(--text-muted)" }}>
-          Loading settings...
-        </div>
-      </AdminLayout>
-    );
-  }
+  const tierLabels = [
+    "0–5 km", "5–10 km", "10–15 km", "15–20 km", "20–25 km", "25+ km",
+  ];
 
   return (
-    <AdminLayout title="Settings" subtitle="Store configuration">
-      <form onSubmit={handleSave} style={{ maxWidth: "640px", display: "flex", flexDirection: "column", gap: "32px" }}>
+    <AdminLayout>
+      <AdminPageHeader
+        title="Settings"
+        subtitle="Store-wide configuration"
+      />
 
-        {/* Contact info */}
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "6px", padding: "24px" }}>
-          <h3 style={{ fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)", margin: "0 0 18px" }}>
-            Contact Information
-          </h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <AdminFormField label="Store Email" required>
-              <input className="input" type="email" required
-                value={settings.storeEmail}
-                onChange={(e) => updateField("storeEmail", e.target.value)} />
-            </AdminFormField>
-            <AdminFormField label="Store Phone" required>
-              <input className="input" type="tel" required
-                value={settings.storePhone}
-                onChange={(e) => updateField("storePhone", e.target.value)} />
-            </AdminFormField>
+      {toast === "saved" && (
+        <div style={{
+          background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)",
+          color: "#4ade80", padding: "12px 16px", borderRadius: "4px",
+          fontSize: "16px", marginBottom: "24px",
+          display: "flex", alignItems: "center", gap: "8px",
+          animation: "fadeIn 0.2s ease",
+        }}>
+          ✓ Settings saved successfully.
+        </div>
+      )}
+
+      {toast === "error" && (
+        <div style={{
+          background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+          color: "#f87171", padding: "12px 16px", borderRadius: "4px",
+          fontSize: "16px", marginBottom: "24px",
+          display: "flex", alignItems: "center", gap: "8px",
+          animation: "fadeIn 0.2s ease",
+        }}>
+          ⚠ Error saving settings.
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "260px",
+          gap: "12px",
+          color: "var(--color-muted)",
+        }}>
+          <div style={{
+            width: "28px",
+            height: "28px",
+            border: "2px solid var(--border)",
+            borderTopColor: "var(--color-accent)",
+            borderRadius: "50%",
+            animation: "spin 0.7s linear infinite",
+          }} />
+          <span style={{ fontSize: "16px" }}>Loading settings…</span>
+        </div>
+      ) : (
+        <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "24px", maxWidth: "680px" }}>
+
+          {/* ── Store Contact ── */}
+          <SettingSection title="Store Contact">
+            <div className="responsive-grid-2" style={{ gap: "16px" }}>
+              <AdminFormField label="Store Email">
+                <input className="input" type="email"
+                  value={settings.storeEmail}
+                  onChange={(e) => handleField("storeEmail", e.target.value)}
+                />
+              </AdminFormField>
+              <AdminFormField label="Phone">
+                <input className="input" type="tel"
+                  value={settings.storePhone}
+                  onChange={(e) => handleField("storePhone", e.target.value)}
+                />
+              </AdminFormField>
+            </div>
             <AdminFormField label="Instagram Handle">
-              <input className="input" type="text"
+              <input className="input"
                 value={settings.socialHandle}
-                onChange={(e) => updateField("socialHandle", e.target.value)} />
+                onChange={(e) => handleField("socialHandle", e.target.value)}
+              />
             </AdminFormField>
-          </div>
-        </div>
+          </SettingSection>
 
-        {/* Pickup */}
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "6px", padding: "24px" }}>
-          <h3 style={{ fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)", margin: "0 0 18px" }}>
-            Pickup Location
-          </h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <AdminFormField label="Pickup Area (public)" required hint="Shown publicly on the site, e.g. on the checkout page.">
-              <input className="input" type="text" required
+          {/* ── Pickup ── */}
+          <SettingSection title="Pickup Location">
+            <AdminFormField label="Pickup Area" hint="General area shown publicly (e.g. for delivery distance calc)">
+              <input className="input"
                 value={settings.pickupArea}
-                onChange={(e) => updateField("pickupArea", e.target.value)} />
+                onChange={(e) => handleField("pickupArea", e.target.value)}
+              />
             </AdminFormField>
-            <AdminFormField label="Exact Pickup Address (private)" hint="Never shown publicly — only sent to customers by email after their order is confirmed, per TRD 14.5.">
-              <input className="input" type="text"
-                value={settings.pickupAddress || ""}
-                onChange={(e) => updateField("pickupAddress", e.target.value)} />
+            <AdminFormField label="Exact Pickup Address" hint="Sent to customer only after order is confirmed. Keep private.">
+              <input className="input"
+                value={settings.pickupAddress}
+                placeholder="e.g. 123 Fake St NE, Calgary, AB T3J 0A1"
+                onChange={(e) => handleField("pickupAddress", e.target.value)}
+              />
             </AdminFormField>
-          </div>
-        </div>
+          </SettingSection>
 
-        {/* GST + Delivery */}
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "6px", padding: "24px" }}>
-          <h3 style={{ fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)", margin: "0 0 18px" }}>
-            Pricing &amp; Delivery
-          </h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <AdminFormField label="GST Rate (%)" required hint="Applied to (subtotal − discount + delivery fee).">
-              <input className="input" type="number" step="0.01" min="0" required
-                value={settings.gstRate}
-                onChange={(e) => updateField("gstRate", Number(e.target.value))} />
+          {/* ── Tax ── */}
+          <SettingSection title="Tax">
+            <AdminFormField label="GST Rate (%)" hint="Enter 5 for 5%. Applied to all orders.">
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <input className="input" type="number" min="0" max="100" step="0.5"
+                  value={settings.gstRate}
+                  style={{ width: "120px" }}
+                  onChange={(e) => handleField("gstRate", Number(e.target.value))}
+                />
+                <span style={{ fontSize: "20px", color: "var(--color-sand)" }}>
+                  %
+                </span>
+              </div>
             </AdminFormField>
+          </SettingSection>
 
-            <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.85rem", color: "var(--text-main)", cursor: "pointer" }}>
-              <input type="checkbox"
+          {/* ── Delivery ── */}
+          <SettingSection title="Delivery">
+            <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", marginBottom: "20px" }}>
+              <input
+                type="checkbox"
                 checked={settings.deliveryEnabled}
-                onChange={(e) => updateField("deliveryEnabled", e.target.checked)}
-                style={{ width: "16px", height: "16px", cursor: "pointer" }} />
-              Delivery enabled
+                onChange={(e) => handleField("deliveryEnabled", e.target.checked)}
+                style={{ width: "18px", height: "18px", accentColor: "var(--color-accent)" }}
+              />
+              <span style={{ fontSize: "20px", color: "var(--color-cream)" }}>
+                Enable delivery option for customers
+              </span>
             </label>
 
-            {/* Delivery tiers */}
-            <div>
-              <label className="label" style={{ marginBottom: "10px", display: "block" }}>
-                Delivery Fee Tiers
-              </label>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {settings.deliveryTiers.map((tier, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", width: "60px", flexShrink: 0 }}>
-                      Up to
-                    </span>
-                    <input className="input" type="number" min="0"
-                      value={tier.maxKm >= 999999 ? "" : tier.maxKm}
-                      placeholder={tier.maxKm >= 999999 ? "∞ (beyond)" : ""}
-                      disabled={tier.maxKm >= 999999}
-                      onChange={(e) => updateTier(i, "maxKm", e.target.value)}
-                      style={{ width: "100px" }} />
-                    <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>km →</span>
-                    <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>$</span>
-                    <input className="input" type="number" min="0" step="0.01"
-                      value={tier.fee}
-                      onChange={(e) => updateTier(i, "fee", e.target.value)}
-                      style={{ width: "90px" }} />
-                  </div>
-                ))}
+            {settings.deliveryEnabled && (
+              <div>
+                <p className="label" style={{ marginBottom: "12px" }}>Delivery Fee Tiers (Calgary only)</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {settings.deliveryTiers.map((tier, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                      <span style={{
+                        width: "80px", fontSize: "16px", color: "var(--color-sand)", flexShrink: 0,
+                      }}>
+                        {tierLabels[i]}
+                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ color: "var(--color-muted)", fontSize: "20px" }}>$</span>
+                        <input
+                          className="input"
+                          type="number" min="0" step="1"
+                          value={tier.fee}
+                          style={{ width: "90px" }}
+                          onChange={(e) => handleTierFee(i, e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontSize: "14px", color: "var(--color-muted)", marginTop: "10px" }}>
+                  Delivery minimum: 4 items. Calgary area only.
+                </p>
               </div>
-              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "8px" }}>
-                The last tier (∞) applies to any distance beyond the second-to-last tier's limit.
-              </p>
-            </div>
-          </div>
-        </div>
+            )}
+          </SettingSection>
 
-        {/* Save */}
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <button type="submit" disabled={saving} className="btn btn-primary">
-            {saving ? "Saving..." : "Save Settings"}
-          </button>
-          {saveStatus === "success" && (
-            <span style={{ fontSize: "0.85rem", color: "#4ade80" }}>✓ Settings saved successfully</span>
-          )}
-          {saveStatus === "error" && (
-            <span style={{ fontSize: "0.85rem", color: "#f87171" }}>✕ Failed to save — please try again</span>
-          )}
-        </div>
-      </form>
+          {/* Save */}
+          <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? "Saving…" : "Save Settings"}
+            </button>
+          </div>
+        </form>
+      )}
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </AdminLayout>
+  );
+}
+
+// ── Helper component ─────────────────────────
+function SettingSection({ title, children }) {
+  return (
+    <div style={{
+      background: "var(--bg-card)", border: "1px solid var(--border)",
+      borderRadius: "4px", padding: "24px",
+      display: "flex", flexDirection: "column", gap: "16px",
+    }}>
+      <h5 style={{
+        fontSize: "14px",
+        letterSpacing: "0.14em", textTransform: "uppercase",
+        color: "var(--color-sand)", margin: 0,
+      }}>
+        {title}
+      </h5>
+      {children}
+    </div>
   );
 }

@@ -27,7 +27,6 @@
 // backend service, not a specific end user.
 // ─────────────────────────────────────────────
 const express = require('express');
-const cors = require('cors');
 const dotenv = require('dotenv');
 const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
@@ -37,7 +36,12 @@ dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-app.use(cors());
+// No cors() here on purpose: this service is only ever called
+// server-to-server by the main Next.js app (which proxies every
+// client-facing request), never directly from a browser — a browser
+// has no way to supply the x-internal-key header anyway. Leaving CORS
+// off means a cross-origin browser request fails at the preflight
+// stage instead of ever reaching the internal-key check.
 app.use(express.json());
 
 // Initialize Supabase
@@ -50,6 +54,43 @@ app.use((req, res, next) => {
   const internalKey = req.headers['x-internal-key'];
   if (!internalKey || internalKey !== process.env.INTERNAL_SERVICE_KEY) {
     return res.status(401).json({ error: 'Unauthorized: Missing or invalid x-internal-key header' });
+  }
+  next();
+});
+
+// ─────────────────────────────────────────────
+// Rate limiting — in-memory (fine for a single instance). NOTE: the
+// x-forwarded-for seen here is normally the main Next.js app's own
+// address, not the end customer's — this is a backstop against a
+// runaway bug/loop or someone hitting this service directly with a
+// leaked internal key, not per-customer throttling.
+// ─────────────────────────────────────────────
+const rateLimitStore = new Map();
+function isRateLimited(key, { limit = 60, windowMs = 60 * 1000 } = {}) {
+  const now = Date.now();
+  const timestamps = (rateLimitStore.get(key) || []).filter((t) => now - t < windowMs);
+  if (timestamps.length >= limit) {
+    rateLimitStore.set(key, timestamps);
+    return true;
+  }
+  timestamps.push(now);
+  rateLimitStore.set(key, timestamps);
+  return false;
+}
+setInterval(() => {
+  const now = Date.now();
+  const oneHourMs = 60 * 60 * 1000;
+  for (const [k, timestamps] of rateLimitStore.entries()) {
+    const fresh = timestamps.filter((t) => now - t < oneHourMs);
+    if (fresh.length === 0) rateLimitStore.delete(k);
+    else rateLimitStore.set(k, fresh);
+  }
+}, 10 * 60 * 1000);
+
+app.use((req, res, next) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+  if (isRateLimited(`ip:${ip}`)) {
+    return res.status(429).json({ error: 'Too many requests, please slow down.' });
   }
   next();
 });

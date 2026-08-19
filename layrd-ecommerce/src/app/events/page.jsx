@@ -1,301 +1,514 @@
 "use client";
-// ─────────────────────────────────────────────
-// LÄYRD – Events / Private Catering page (/events)
-// Login required to submit inquiry
-// ─────────────────────────────────────────────
-// REPLACE WITH:
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "../../lib/supabase.js";
 import Link from "next/link";
-import { CORE_FLAVOURS, LIMITED_FLAVOURS, EVENT_MIN_CANS, EVENT_MIN_NOTICE_DAYS } from "../../lib/constants.js";
-import { getCurrentUser, getSession } from "../../lib/auth.js";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { CORE_FLAVOURS, LIMITED_FLAVOURS, EVENT_MIN_CANS, EVENT_MIN_NOTICE_DAYS, PRICES } from "../../lib/constants.js";
+import { FileText, CheckCircle2, CreditCard, Wand2, Truck } from "lucide-react";
 
 const TIERS = [
-  { label: "Core Can (150ml)", price: "$5 each" },
-  { label: "Limited Can (150ml)", price: "$6 each" },
+  { label: "Core Can (150ml)", price: `$${PRICES.eventCorePerCan} each` },
+  { label: "Limited Can (150ml)", price: `$${PRICES.eventLimitedPerCan} each` },
   { label: "Minimum order", price: `${EVENT_MIN_CANS} cans` },
   { label: "Custom labels", price: "Included" },
   { label: "Deposit (on approval)", price: "50% non-refundable" },
   { label: "Minimum notice", price: `${EVENT_MIN_NOTICE_DAYS} business days` },
 ];
 
+const EVENT_STYLES = `
+  .events-page {
+    --events-section-gap: clamp(2.5rem, 5vw, 4.5rem);
+    --events-section-padding: clamp(2.5rem, 5vw, 4.5rem);
+    --events-heading-gap: clamp(1.25rem, 2vw, 2rem);
+  }
+  .events-section {
+    padding: var(--events-section-padding) 24px;
+    background: var(--bg-main);
+  }
+  .events-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--events-section-gap);
+  }
+  .events-heading {
+    font-size: clamp(32px, 6vw, 48px);
+    margin-bottom: var(--events-heading-gap);
+    color: var(--text-main);
+    text-align: center;
+  }
+  .events-pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: clamp(3rem, 7vw, 7rem);
+    row-gap: clamp(1.75rem, 3vw, 3rem);
+  }
+  @media (max-width: 768px) {
+    .events-pricing-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .events-pricing-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: clamp(1rem, 2vw, 2rem);
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: clamp(16px, 4vw, 24px);
+  }
+  .events-pricing-value {
+    text-align: right;
+    font-weight: 700;
+    flex-shrink: 0;
+    max-width: 50%;
+  }
+`;
+
+function SafeEventImage({ src, alt, objectPosition = "center", sizes, priority = false }) {
+  if (src && src.trim() !== "") {
+    return (
+      <Image 
+        src={src} 
+        alt={alt} 
+        fill 
+        style={{ objectFit: "cover", objectPosition }} 
+        sizes={sizes} 
+        priority={priority} 
+      />
+    );
+  }
+  return (
+    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Image src="/layrd-swirl.png" alt="LÄYRD Logo" width={60} height={60} style={{ opacity: 0.1 }} />
+    </div>
+  );
+}
+
 export default function EventsPage() {
+  const router = useRouter();
   const [form, setForm] = useState({
     eventType: "", eventDate: "", guestCount: "", coreCans: "", limitedCans: "", notes: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // REPLACE WITH:
-  // Real login state, checked against Supabase on mount.
-  // WHY a separate "checking" state instead of just isLoggedIn=false→true:
-  // without it, a logged-in user would see the locked-out card flash
-  // briefly before getCurrentUser() resolves, which looks like a bug.
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [submitError, setSubmitError] = useState(null);
+  const [session, setSession] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+
+  const formRef = useRef(null);
+  const confirmationRef = useRef(null);
+
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [siteImages, setSiteImages] = useState({});
 
   useEffect(() => {
-    let cancelled = false;
-    getCurrentUser().then((user) => {
-      if (!cancelled) {
-        setIsLoggedIn(!!user);
-        setCheckingAuth(false);
-      }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoadingAuth(false);
     });
-    // WHY the cancelled flag: if the user navigates away before this
-    // resolves, we don't want to call setState on an unmounted component.
-    return () => {
-      cancelled = true;
-    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // REPLACE WITH:
+  useEffect(() => {
+  fetch("/api/site-images")
+    .then((res) => res.json())
+    .then(setSiteImages)
+    .catch((err) => console.error("Failed to load site images", err));
+}, []);
+
+  // Returning from a completed Stripe deposit payment (see successUrl in
+  // /api/events) — show the submitted confirmation directly. Read via
+  // window.location rather than useSearchParams() so this plain client
+  // component doesn't need a Suspense boundary just for a one-time check.
+  useEffect(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("booked") === "1") {
+      setSubmitted(true);
+      // The confirmation block is far down the page (after hero/occasions/
+      // pricing sections) — a fresh page load from Stripe's redirect lands
+      // at the top, so scroll down to it once it's actually rendered.
+      setTimeout(() => {
+        confirmationRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
+    }
+  }, []);
+
+  const isLoggedIn = !!session;
+
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!session) return;
     setSubmitting(true);
-    setSubmitError(null);
 
     try {
-      // WHY we grab the session here rather than relying on isLoggedIn:
-      // isLoggedIn just tells us a user exists; the API route needs the
-      // actual JWT access token to verify identity server-side.
-      const session = await getSession();
-      if (!session?.access_token) {
-        setSubmitError("Your session has expired. Please log in again.");
-        setSubmitting(false);
-        return;
-      }
-
       const res = await fetch("/api/events", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          "Authorization": `Bearer ${session.access_token}`
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(form)
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        // Surfaces the exact server-side validation message (e.g. "Minimum
-        // order is 24 cans") rather than a generic failure message.
-        setSubmitError(data.error || "Something went wrong. Please try again.");
-        setSubmitting(false);
+        throw new Error(data.error || "Failed to submit inquiry");
+      }
+
+      // Redirect to Stripe to pay the 50% deposit — admin isn't notified
+      // and the request isn't a real "booking" until that payment confirms.
+      if (data.url) {
+        window.location.href = data.url;
         return;
       }
 
       setSubmitted(true);
     } catch (err) {
-      console.error("/events: submit failed:", err);
-      setSubmitError("Something went wrong. Please try again.");
+      console.error(err);
+      alert(err.message || "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
+  function handleGetStarted() {
+    if (!isLoggedIn) {
+      router.push("/login");
+    } else {
+      setShowForm(true);
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }
+
   const totalCans = (parseInt(form.coreCans) || 0) + (parseInt(form.limitedCans) || 0);
-  const estimatedTotal = (parseInt(form.coreCans) || 0) * 5 + (parseInt(form.limitedCans) || 0) * 6;
+  const estimatedTotal = (parseInt(form.coreCans) || 0) * PRICES.eventCorePerCan + (parseInt(form.limitedCans) || 0) * PRICES.eventLimitedPerCan;
+
+  const heroImage = siteImages.events_hero || null;
+  const safeOccasionImages = [
+  siteImages.events_birthday || null,
+  siteImages.events_wedding || null,
+  siteImages.events_corporate || null,
+  ];
 
   return (
-    <div>
+    <div className="events-page">
+      <style>{EVENT_STYLES}</style>
       {/* Hero */}
-      <section
-        style={{
-          padding: "80px 24px",
-          background: "linear-gradient(135deg, #0a0a0a 0%, #12100a 50%, #0a0a0a 100%)",
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-        <div className="container" style={{ maxWidth: "700px", textAlign: "center" }}>
-          <span className="badge badge-gold" style={{ marginBottom: "16px" }}>Private Events</span>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", marginBottom: "16px" }}>
-            Custom Catering for<br /><em style={{ color: "var(--color-accent)", fontStyle: "italic" }}>Unforgettable</em> Occasions
-          </h1>
-          <div className="divider-accent" style={{ margin: "0 auto 20px" }} />
-          <p style={{ fontSize: "0.95rem", maxWidth: "500px", margin: "0 auto" }}>
-            From intimate celebrations to corporate events — LÄYRD creates personalized 150ml cake cans 
-            with AI-designed custom labels for every occasion.
-          </p>
-        </div>
-      </section>
+      <section className="events-section" style={{ borderBottom: "1px solid var(--border-soft)", textAlign: "center", position: "relative", overflow: "hidden" }}>
+        <div className="container" style={{ maxWidth: "1200px", display: "flex", flexDirection: "column", alignItems: "center", gap: "clamp(1.5rem, 4vw, 3rem)" }}>
+          
+          <div style={{ maxWidth: "800px" }}>
+            <h1 style={{ marginBottom: "var(--events-heading-gap)", fontSize: "clamp(30px, 5vw, 56px)", color: "var(--text-main)", lineHeight: "1.1" }}>
+              Custom Catering for <em style={{ color: "var(--accent)", fontStyle: "italic" }}>Unforgettable</em> Occasions
+            </h1>
+            <p style={{ fontSize: "24px", maxWidth: "600px", margin: "0 auto", color: "var(--text-muted)" }}>
+              Personalized 150ml cake cans for every occasion.
+            </p>
+          </div>
 
-      <section className="section">
-        <div className="container" style={{ maxWidth: "900px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: "64px" }}>
-            {/* Info sidebar */}
-            <div>
-              <h3 style={{ fontFamily: "'Cormorant Garamond', serif", marginBottom: "24px" }}>
-                Event Pricing
-              </h3>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
-                {TIERS.map((t, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: "flex", justifyContent: "space-between",
-                      padding: "14px 0", borderBottom: "1px solid var(--border)",
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    <span style={{ color: "var(--color-sand)" }}>{t.label}</span>
-                    <span style={{ color: "var(--color-cream)", fontWeight: 500 }}>{t.price}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div
-                style={{
-                  marginTop: "32px", padding: "20px",
-                  background: "rgba(201,169,110,0.06)", border: "1px solid rgba(201,169,110,0.15)", borderRadius: "4px",
-                }}
-              >
-                <h5 style={{ fontFamily: "Inter, sans-serif", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "10px" }}>
-                  How it works
-                </h5>
-                {[
-                  "Submit your inquiry below",
-                  "Adam reviews and approves/rejects",
-                  "Pay 50% deposit to confirm",
-                  "Design your custom labels in AI Label Studio",
-                  "Collect or receive delivery",
-                ].map((step, i) => (
-                  <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "8px", fontSize: "0.85rem" }}>
-                    <span style={{ color: "var(--color-accent)", flexShrink: 0, fontWeight: 600 }}>{i + 1}.</span>
-                    <span style={{ color: "var(--color-sand)" }}>{step}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ marginTop: "24px" }}>
-                <h5 style={{ fontFamily: "Inter, sans-serif", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "12px" }}>
-                  Available Flavours
-                </h5>
-                <p style={{ fontSize: "0.78rem", color: "var(--color-muted)", marginBottom: "8px" }}>Core — $5/can</p>
-                {CORE_FLAVOURS.map((f) => <p key={f} style={{ fontSize: "0.85rem", color: "var(--color-sand)", marginBottom: "4px" }}>✦ {f}</p>)}
-                <p style={{ fontSize: "0.78rem", color: "var(--color-muted)", marginTop: "12px", marginBottom: "8px" }}>Limited — $6/can</p>
-                {LIMITED_FLAVOURS.map((f) => <p key={f} style={{ fontSize: "0.85rem", color: "var(--color-sand)", marginBottom: "4px" }}>✦ {f}</p>)}
-              </div>
-            </div>
-
-            {/* Inquiry form */}
-            <div>
-              {!isLoggedIn ? (
-                <div
-                  style={{
-                    padding: "48px 36px", textAlign: "center",
-                    background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "4px",
-                  }}
-                >
-                  <div style={{ fontSize: "2.5rem", marginBottom: "20px" }}>🔐</div>
-                  <h3 style={{ fontFamily: "'Cormorant Garamond', serif", marginBottom: "12px" }}>
-                    Login Required
-                  </h3>
-                  <p style={{ fontSize: "0.9rem", marginBottom: "28px" }}>
-                    Please create an account or log in to submit an event inquiry.
-                  </p>
-                  <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-                    <Link href="/login"><button className="btn btn-primary">Log In</button></Link>
-                    <Link href="/signup"><button className="btn btn-outline">Create Account</button></Link>
-                  </div>
-                </div>
-              ) : submitted ? (
-                <div style={{ padding: "48px", textAlign: "center", background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: "4px" }}>
-                  <div style={{ fontSize: "2.5rem", marginBottom: "16px" }}>✓</div>
-                  <h3 style={{ fontFamily: "'Cormorant Garamond', serif", marginBottom: "12px" }}>Inquiry Submitted!</h3>
-                  <p>Adam will review your request and get back to you within 24 hours.</p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                  <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.6rem", marginBottom: "4px" }}>
-                    Submit Inquiry
-                  </h3>
-                  <p style={{ fontSize: "0.85rem", color: "var(--color-sand)", marginBottom: "4px" }}>
-                    Min. {EVENT_MIN_CANS} cans. At least {EVENT_MIN_NOTICE_DAYS} business days notice required.
-                  </p>
-
-                  <div>
-                    <label className="label">Event Type *</label>
-                    <select className="input" required value={form.eventType} onChange={(e) => setForm({ ...form, eventType: e.target.value })}>
-                      <option value="">Select event type</option>
-                      {["Birthday", "Wedding", "Corporate", "Baby Shower", "Anniversary", "Other"].map((t) => (
-                        <option key={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                    <div>
-                      <label className="label">Event Date *</label>
-                      <input className="input" type="date" required value={form.eventDate}
-                        min={new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
-                        onChange={(e) => setForm({ ...form, eventDate: e.target.value })} />
-                    </div>
-                    <div>
-                      <label className="label">Estimated Guests</label>
-                      <input className="input" type="number" min="1" placeholder="50" value={form.guestCount}
-                        onChange={(e) => setForm({ ...form, guestCount: e.target.value })} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                    <div>
-                      <label className="label">Core Cans ($5 each)</label>
-                      <input className="input" type="number" min="0" placeholder="0" value={form.coreCans}
-                        onChange={(e) => setForm({ ...form, coreCans: e.target.value })} />
-                    </div>
-                    <div>
-                      <label className="label">Limited Cans ($6 each)</label>
-                      <input className="input" type="number" min="0" placeholder="0" value={form.limitedCans}
-                        onChange={(e) => setForm({ ...form, limitedCans: e.target.value })} />
-                    </div>
-                  </div>
-
-                  {/* Live estimate */}
-                  {totalCans > 0 && (
-                    <div style={{ padding: "14px 18px", background: "rgba(201,169,110,0.07)", border: "1px solid rgba(201,169,110,0.2)", borderRadius: "3px", fontSize: "0.875rem" }}>
-                      <span style={{ color: "var(--color-sand)" }}>Estimated: </span>
-                      <strong style={{ color: "var(--color-cream)" }}>{totalCans} cans</strong>
-                      <span style={{ color: "var(--color-sand)" }}> · </span>
-                      <strong style={{ color: "var(--color-accent)" }}>${estimatedTotal}</strong>
-                      {totalCans < EVENT_MIN_CANS && (
-                        <span style={{ color: "#f87171", marginLeft: "12px" }}>
-                          (Min. {EVENT_MIN_CANS} cans)
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="label">Additional Notes</label>
-                    <textarea className="input" rows={4} placeholder="Label preferences, dietary restrictions, delivery details..."
-                      value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} style={{ resize: "vertical" }} />
-                  </div>
-
-                  {submitError && (
-                    <div style={{ padding: "12px 16px", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", borderRadius: "3px", fontSize: "0.85rem", color: "#f87171" }}>
-                      {submitError}
-                    </div>
-                  )}
-
-                  <button type="submit" disabled={submitting || totalCans < EVENT_MIN_CANS} className="btn btn-primary btn-lg">
-                    {submitting ? "Submitting..." : "Submit Inquiry"}
-                  </button>
-                </form>
-              )}
+          {/* Premium Hero Visual Frame */}
+          <div style={{
+            position: "relative",
+            width: "100%",
+            maxWidth: "600px",
+            aspectRatio: "4/3",
+            background: "var(--bg-soft)",
+            borderRadius: "24px",
+            padding: "20px",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+            transform: "perspective(1000px) rotateX(2deg)",
+            transition: "transform 0.5s ease",
+            cursor: "pointer"
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = "perspective(1000px) rotateX(0deg) scale(1.02)"}
+          onMouseOut={(e) => e.currentTarget.style.transform = "perspective(1000px) rotateX(2deg) scale(1)"}
+          >
+            {/* Decorative background shapes */}
+            <div style={{ position: "absolute", top: "-20px", left: "-20px", width: "100px", height: "100px", borderRadius: "50%", background: "var(--accent)", opacity: 0.1, zIndex: 0 }} />
+            <div style={{ position: "absolute", bottom: "-30px", right: "-30px", width: "150px", height: "150px", borderRadius: "50%", background: "var(--text-main)", opacity: 0.05, zIndex: 0 }} />
+            
+            <div style={{ position: "relative", width: "100%", height: "100%", borderRadius: "16px", overflow: "hidden", zIndex: 1, backgroundColor: "#f5f5f5" }}>
+               <SafeEventImage src={heroImage} alt="LÄYRD Cake Can Event Display" sizes="(max-width: 600px) 100vw, 600px" priority={true} />
             </div>
           </div>
         </div>
       </section>
 
-      <style>{`
-        @media (max-width: 768px) {
-          .container > div[style*="grid-template-columns: 1fr 1.4fr"] {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
+      {/* Main Content */}
+      <section className="events-section">
+        <div className="events-container">
+
+          {/* Occasions Cards */}
+          <div>
+            <h2 className="events-heading">
+              Perfect For Any Occasion
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              
+              {/* Birthday */}
+              <div style={{ background: "#FDF6ED", borderRadius: "16px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column" }}>
+                <div style={{ position: "relative", width: "100%", height: "250px", backgroundColor: "#f0e6d2" }}>
+                  <SafeEventImage src={safeOccasionImages[0]} alt="Birthdays" objectPosition="center 60%" sizes="(max-width: 768px) 100vw, 33vw" />
+                </div>
+                <div style={{ padding: "30px", textAlign: "center" }}>
+                  <h3 style={{ fontSize: "28px", color: "#4A3B32", marginBottom: "10px" }}>Birthdays</h3>
+                  <p style={{ color: "#7A6859", fontSize: "16px" }}>Celebrate with a unique layered experience.</p>
+                </div>
+              </div>
+
+              {/* Weddings */}
+              <div style={{ background: "#F9F9F9", borderRadius: "16px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column" }}>
+                <div style={{ position: "relative", width: "100%", height: "250px", backgroundColor: "#eaeaea" }}>
+                  <SafeEventImage src={safeOccasionImages[1]} alt="Weddings" objectPosition="center 40%" sizes="(max-width: 768px) 100vw, 33vw" />
+                </div>
+                <div style={{ padding: "30px", textAlign: "center" }}>
+                  <h3 style={{ fontSize: "28px", color: "#333", marginBottom: "10px" }}>Weddings</h3>
+                  <p style={{ color: "#666", fontSize: "16px" }}>Elegant, individually portioned desserts.</p>
+                </div>
+              </div>
+
+              {/* Corporate */}
+              <div style={{ background: "#2C2C2C", borderRadius: "16px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column" }}>
+                <div style={{ position: "relative", width: "100%", height: "250px", backgroundColor: "#1a1a1a" }}>
+                  <SafeEventImage src={safeOccasionImages[2]} alt="Corporate Events" objectPosition="center 30%" sizes="(max-width: 768px) 100vw, 33vw" />
+                </div>
+                <div style={{ padding: "30px", textAlign: "center" }}>
+                  <h3 style={{ fontSize: "28px", color: "#F0F0F0", marginBottom: "10px" }}>Corporate</h3>
+                  <p style={{ color: "#A0A0A0", fontSize: "16px" }}>Premium branded gifting and catering.</p>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+
+          {/* Custom Label Preview */}
+          <div>
+            <h2 className="events-heading">
+              Personalize Your Event
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "30px" }}>
+              <p style={{ fontSize: "20px", color: "var(--text-muted)", textAlign: "center", maxWidth: "600px" }}>
+                Once your inquiry is approved, you gain access to the AI Label Studio to customize your jars.
+              </p>
+              
+              <div style={{ 
+                width: "280px", 
+                height: "280px", 
+                background: "#FFFFFF", 
+                borderRadius: "50%", 
+                boxShadow: "0 15px 35px rgba(0,0,0,0.1)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "20px",
+                border: "4px solid #F0F0F0"
+              }}>
+                <div style={{ marginBottom: "10px" }}>
+                  <Image src="/layrd-swirl.png" alt="LÄYRD Swirl" width={80} height={80} />
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <h4 style={{ fontFamily: "serif", fontSize: "24px", color: "#000", margin: "0 0 5px 0" }}>Your Event</h4>
+                  <p style={{ fontSize: "12px", color: "#666", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Custom Label Preview</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 1. Flavours */}
+          <div>
+            <h2 className="events-heading">
+              Available Flavours
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 mt-8 max-w-[800px] mx-auto">
+              <div style={{ textAlign: "center" }}>
+                <h4 style={{ color: "var(--text-main)", fontSize: "24px", marginBottom: "20px", letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 600 }}>Core Collection</h4>
+                {CORE_FLAVOURS.map((f) => (
+                  <p key={f} style={{ fontSize: "24px", color: "var(--text-main)", marginBottom: "12px", fontWeight: 500 }}>✦ {f}</p>
+                ))}
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <h4 style={{ color: "var(--text-main)", fontSize: "24px", marginBottom: "20px", letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 600 }}>Limited Edition</h4>
+                {LIMITED_FLAVOURS.map((f) => (
+                  <p key={f} style={{ fontSize: "24px", color: "var(--text-main)", marginBottom: "12px", fontWeight: 500 }}>✦ {f}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 2. How it works */}
+          <div style={{ textAlign: "center" }}>
+            <h2 className="events-heading">
+              How It Works
+            </h2>
+            <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", flexWrap: "wrap", gap: "20px" }}>
+              {[
+                { text: "Submit Inquiry", icon: <FileText size={42} strokeWidth={1.5} color="var(--accent)" /> },
+                { text: "LÄYRD Reviews & Approves", icon: <CheckCircle2 size={42} strokeWidth={1.5} color="var(--accent)" /> },
+                { text: "Pay 50% Deposit", icon: <CreditCard size={42} strokeWidth={1.5} color="var(--accent)" /> },
+                { text: "Design Labels (AI)", icon: <Wand2 size={42} strokeWidth={1.5} color="var(--accent)" /> },
+                { text: "Collect or Delivery", icon: <Truck size={42} strokeWidth={1.5} color="var(--accent)" /> }
+              ].map((step, i) => (
+                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", flex: "1 1 150px" }}>
+                  <div>
+                    {step.icon}
+                  </div>
+                  <span style={{ color: "var(--text-main)", fontWeight: 600, fontSize: "20px", lineHeight: "120%" }}>{step.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. Pricing */}
+          <div style={{ background: "var(--bg-soft)", padding: "var(--events-section-padding)", borderRadius: "8px", border: "1px solid var(--border-soft)", maxWidth: "1000px", margin: "0 auto", width: "100%" }}>
+            <h2 className="events-heading">
+              Event Pricing
+            </h2>
+            <div className="events-pricing-grid">
+              {TIERS.map((t, i) => (
+                <div key={i} className="events-pricing-item">
+                  <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>{t.label}</span>
+                  <span className="events-pricing-value" style={{ color: "var(--text-main)" }}>{t.price}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Get Started Button */}
+          {!showForm && !submitted && (
+            <div style={{ textAlign: "center", marginTop: "10px" }}>
+              <button
+                onClick={handleGetStarted}
+                style={{
+                  padding: "20px 60px",
+                  fontSize: "24px",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.12em",
+                  background: "var(--accent)",
+                  color: "#FFFFFF",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  boxShadow: "0 6px 20px rgba(184,155,94,0.3)",
+                  transition: "transform 0.2s, box-shadow 0.2s"
+                }}
+                onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-3px)"}
+                onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}
+              >
+                Get a Quote
+              </button>
+            </div>
+          )}
+
+          {/* Inquiry Form */}
+          {showForm && !submitted && (
+            <div ref={formRef} style={{ background: "var(--surface)", padding: "var(--events-section-padding)", borderRadius: "8px", border: "1px solid var(--border-soft)", maxWidth: "800px", margin: "0 auto", width: "100%" }}>
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                <div style={{ textAlign: "center", marginBottom: "var(--events-heading-gap)" }}>
+                  <h3 style={{ fontSize: "clamp(26px, 4vw, 48px)", marginBottom: "10px", color: "var(--text-main)" }}>
+                    Submit Inquiry
+                  </h3>
+                  <p style={{ fontSize: "20px", color: "var(--text-muted)" }}>
+                    Min. {EVENT_MIN_CANS} cans. At least {EVENT_MIN_NOTICE_DAYS} business days notice required.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="label">Event Type *</label>
+                  <select className="input" required value={form.eventType} onChange={(e) => setForm({ ...form, eventType: e.target.value })}>
+                    <option value="">Select event type</option>
+                    {["Birthday", "Wedding", "Corporate", "Baby Shower", "Anniversary", "Other"].map((t) => (
+                      <option key={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="label">Event Date *</label>
+                    <input className="input" type="date" required value={form.eventDate}
+                      min={new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
+                      onChange={(e) => setForm({ ...form, eventDate: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="label">Estimated Guests</label>
+                    <input className="input" type="number" min="1" placeholder="50" value={form.guestCount}
+                      onChange={(e) => setForm({ ...form, guestCount: e.target.value })} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="label">{`Core Cans ($${PRICES.eventCorePerCan} each)`}</label>
+                    <input className="input" type="number" min="0" placeholder="0" value={form.coreCans}
+                      onChange={(e) => setForm({ ...form, coreCans: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="label">{`Limited Cans ($${PRICES.eventLimitedPerCan} each)`}</label>
+                    <input className="input" type="number" min="0" placeholder="0" value={form.limitedCans}
+                      onChange={(e) => setForm({ ...form, limitedCans: e.target.value })} />
+                  </div>
+                </div>
+
+                {/* Live estimate */}
+                {totalCans > 0 && (
+                  <div style={{ padding: "20px", background: "var(--bg-soft)", border: "1px solid var(--accent)", borderRadius: "4px", fontSize: "24px", textAlign: "center" }}>
+                    <span style={{ color: "var(--text-muted)" }}>Estimated: </span>
+                    <strong style={{ color: "var(--text-main)" }}>{totalCans} cans</strong>
+                    <span style={{ color: "var(--text-muted)", margin: "0 10px" }}> · </span>
+                    <strong style={{ color: "var(--accent)" }}>${estimatedTotal}</strong>
+                    {totalCans < EVENT_MIN_CANS && (
+                      <div style={{ color: "#ef4444", marginTop: "8px", fontSize: "20px" }}>
+                        (Minimum {EVENT_MIN_CANS} cans required)
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <label className="label">Additional Notes</label>
+                  <textarea className="input" rows={4} placeholder="Label preferences, dietary restrictions, delivery details..."
+                    value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} style={{ resize: "vertical" }} />
+                </div>
+
+                <button type="submit" disabled={submitting || totalCans < EVENT_MIN_CANS} className="btn btn-primary btn-lg" style={{ marginTop: "20px", fontSize: "24px", padding: "18px" }}>
+                  {submitting ? "Submitting..." : "Submit Inquiry"}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {submitted && (
+            <div ref={confirmationRef} style={{ padding: "var(--events-section-padding)", textAlign: "center", background: "var(--bg-soft)", border: "1px solid #4ade80", borderRadius: "8px" }}>
+              <div style={{ fontSize: "clamp(26px, 4vw, 48px)", marginBottom: "20px", color: "#4ade80" }}>✓</div>
+              <h3 style={{ fontSize: "clamp(26px, 4vw, 48px)", marginBottom: "15px", color: "var(--text-main)" }}>Deposit Received!</h3>
+              <p style={{ fontSize: "24px", color: "var(--text-muted)", marginBottom: "28px" }}>Your 50% deposit has been paid and your event request is booked. LÄYRD will review your request and get back to you within 24 hours.</p>
+              <Link href="/ai-label-studio">
+                <button className="btn btn-primary btn-lg" style={{ fontSize: "22px", padding: "18px 40px" }}>
+                  ✨ Generate Your AI Label Now
+                </button>
+              </Link>
+              <p style={{ fontSize: "16px", color: "var(--text-muted)", marginTop: "16px" }}>
+                Your deposit is confirmed, so label design is unlocked right away — no need to wait for approval.
+              </p>
+            </div>
+          )}
+
+        </div>
+      </section>
     </div>
   );
 }

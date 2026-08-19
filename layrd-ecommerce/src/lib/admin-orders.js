@@ -1,132 +1,133 @@
-// src/lib/admin-orders.js
+"use server";
+// ─────────────────────────────────────────────
+// LÄYRD – admin-orders.js
+// Server-side service layer for Orders admin.
+// Every function requires a valid admin access token as its first
+// argument — see requireAdmin() in admin-server-auth.js for why.
 //
-// WHY this maps Supabase's snake_case columns to the OLD mock's camelCase
-// shape (customer, payment, items as a count, etc.): admin/orders/page.jsx
-// was already built against that shape. Remapping data here means we don't
-// need to touch the page component's JSX/rendering logic at all — only
-// this service layer changes.
+// Field mapping notes:
+//   The UI expects `delivery_method`, but the real DB column is
+//   `fulfillment` — mapped here, not renamed in the database.
+//   The UI expects `order_number`; there is no such column, but `id`
+//   is already a human-readable order string (e.g. "ORD-2026-036"),
+//   so we map order_number = id. The UI's "(Legacy)" fallback for
+//   missing order_number will simply never trigger as a result.
+// ─────────────────────────────────────────────
+import { getSupabaseAdmin } from "./supabase";
+import { requireAdmin } from "@/lib/admin-server-auth";
 
-import { getSupabaseAdmin } from "@/lib/supabase";
-import { updateOrderItemsStatus } from "@/lib/admin-order-items";
-
-export const ORDER_STATUSES = [
-  "New",
-  "Paid",
-  "Pending Payment",
-  "Preparing",
-  "Ready for Pickup",
-  "Out for Delivery",
-  "Completed",
-  "Cancelled",
-  "Refunded",
-];
-export const ORDER_TYPES = ["regular", "event", "wholesale"];
-
-/**
- * Maps a raw Supabase orders row (+ optional order_items count) into the
- * shape admin/orders/page.jsx expects.
- */
-function mapOrder(row, itemCount) {
+function dbToJs(row) {
   return {
-    id: row.id,
-    customer: row.customer_name,
-    email: row.customer_email,
-    type: row.type,
-    items: itemCount ?? 0,
-    subtotal: Number(row.subtotal),
-    gst: Number(row.gst),
-    deliveryFee: Number(row.delivery_fee),
-    total: Number(row.total),
-    status: row.status,
-    fulfillment: row.fulfillment,
-    payment: row.payment_method,
-    paymentStatus: row.payment_status,
-    // WHY this date formatting: the old mock used "YYYY-MM-DD HH:MM" —
-    // matching that format keeps the table column rendering unchanged.
-    date: new Date(row.created_at).toISOString().slice(0, 16).replace("T", " "),
+    ...row,
+    order_number: row.id,
+    delivery_method: row.fulfillment,
   };
 }
 
 /**
- * Get all orders, most recent first, each annotated with its item count.
+ * Get all orders, newest first, with a per-order item count attached
+ * (used by the CSV export's "Items" column).
  */
-export async function getOrders() {
-  const supabase = getSupabaseAdmin();
+export async function getOrders(accessToken) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
 
-  // WHY select order_items(quantity) here: we need the count of items per
-  // order for the table's "Items" column, without fetching full item
-  // details (that only happens in getOrderWithItems, on demand).
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("orders")
-    .select("*, order_items(quantity)")
+    .select("*")
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("admin-orders.js: getOrders failed:", error.message);
+    console.error("Error fetching orders:", error);
     return [];
   }
 
-  return data.map((row) => {
-    const itemCount = row.order_items.reduce((sum, i) => sum + i.quantity, 0);
-    return mapOrder(row, itemCount);
-  });
+  // One extra query for item counts (grouped in JS) rather than N+1
+  // per-order queries.
+  const orderIds = data.map((o) => o.id);
+  let countsByOrder = {};
+  if (orderIds.length > 0) {
+    const { data: items, error: itemsError } = await supabase
+      .from("order_items")
+      .select("order_id")
+      .in("order_id", orderIds);
+    if (!itemsError && items) {
+      for (const item of items) {
+        countsByOrder[item.order_id] = (countsByOrder[item.order_id] || 0) + 1;
+      }
+    }
+  }
+
+  return data.map((row) => ({
+    ...dbToJs(row),
+    items: countsByOrder[row.id] || 0,
+  }));
 }
 
 /**
- * Get a single order with its full line items (for the detail panel).
+ * Get a single order with its line items.
  */
-export async function getOrderWithItems(id) {
-  const supabase = getSupabaseAdmin();
+export async function getOrderWithItems(accessToken, id) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
 
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("orders")
-    .select("*, order_items(*)")
+    .select(`*, order_items(*)`)
     .eq("id", id)
     .single();
 
   if (error || !data) {
-    console.error("admin-orders.js: getOrderWithItems failed:", error?.message);
+    console.error("Error fetching order:", error);
     return null;
   }
 
-  const itemCount = data.order_items.reduce((sum, i) => sum + i.quantity, 0);
+  // UI expects product_name/size_ml, real columns are name/size (text)
+  const lineItems = (data.order_items || []).map((item) => ({
+    ...item,
+    product_name: item.name,
+    size_ml: item.size ? parseInt(item.size) : null,
+  }));
 
-  return {
-    ...mapOrder(data, itemCount),
-    // WHY lineItems keeps its own shape (id, flavour, size, quantity):
-    // matches what the detail panel in admin/orders/page.jsx already
-    // renders (item.flavour, item.size, item.quantity).
-    lineItems: data.order_items.map((item) => ({
-      id: item.id,
-      flavour: item.flavour,
-      size: item.size,
-      quantity: item.quantity,
-    })),
-  };
+  return { ...dbToJs(data), lineItems };
 }
 
+// Advancing an order to any of these means fulfillment is underway or done —
+// that should never happen on an order that hasn't actually been paid for
+// (this is also how a manually-confirmed cash/e-transfer order gets marked
+// paid), so payment_status is kept in sync with status here instead of
+// requiring a second, separate manual update that's easy to forget.
+const STATUSES_IMPLYING_PAID = ["Paid", "Preparing", "Ready for Pickup", "Out for Delivery", "Completed"];
+
 /**
- * Update order status by id. Real Supabase update — status lives ONLY on
- * the orders table (order_items has no separate status field, per the
- * real schema), so updateOrderItemsStatus() is now just a compatibility
- * no-op call (see admin-order-items.js).
+ * Update order status by id. Keeps payment_status in sync so the two
+ * fields can't silently drift apart (e.g. status says "Paid" while
+ * payment_status still says "Unpaid").
  */
-export async function updateOrderStatus(id, status) {
+export async function updateOrderStatus(accessToken, id, status) {
+  const admin = await requireAdmin(accessToken);
+  if (!admin) throw new Error("Unauthorized");
+
   const supabase = getSupabaseAdmin();
+  const updates = { status };
+  if (STATUSES_IMPLYING_PAID.includes(status)) {
+    updates.payment_status = "Paid";
+  } else if (status === "Refunded") {
+    updates.payment_status = "Refunded";
+  }
 
   const { data, error } = await supabase
     .from("orders")
-    .update({ status })
+    .update(updates)
     .eq("id", id)
     .select()
     .single();
 
   if (error) {
-    console.error("admin-orders.js: updateOrderStatus failed:", error.message);
+    console.error("Error updating order status:", error);
     return null;
   }
-
-  updateOrderItemsStatus(id, status); // compatibility no-op, see admin-order-items.js
-
-  return mapOrder(data);
+  return dbToJs(data);
 }
