@@ -1147,6 +1147,19 @@ select.input {
 
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
+  /* .btn defaults to white-space: nowrap with no width limit (see base
+     rule above), so its width is purely text length + padding — fine on
+     desktop, but a long label (especially with an inline font-size bump
+     like several CTAs use) can end up wider than its own mobile
+     container and get visually clipped instead of wrapping. Letting it
+     wrap + capping it at the container's width fixes that without
+     touching desktop sizing/spacing at all. */
+  .btn {
+    white-space: normal;
+    text-align: center;
+    max-width: 100%;
+  }
+
   .container {
     padding: 0 16px;
   }
